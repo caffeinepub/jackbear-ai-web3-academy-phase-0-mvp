@@ -1,0 +1,287 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 270 91% 65%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 280 85% 70%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 270 91% 65%;
+    --radius: 0.5rem;
+
+    /* Caffeine.ai brand colors */
+    --caffeine-yellow: 48 100% 50%;
+    --caffeine-yellow-foreground: 0 0% 0%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 270 95% 75%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 280 90% 75%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 270 95% 75%;
+
+    /* Caffeine.ai brand colors for dark mode */
+    --caffeine-yellow: 48 100% 55%;
+    --caffeine-yellow-foreground: 0 0% 0%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Orbitron", "Inter", system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Typography */
+  .font-display {
+    font-family: "Orbitron", "Inter", system-ui, sans-serif;
+  }
+
+  /* Shared heading styles for consistency */
+  .heading-hero {
+    @apply text-4xl md:text-5xl lg:text-6xl font-display font-bold;
+  }
+
+  .heading-section {
+    @apply text-3xl md:text-4xl font-display font-bold;
+  }
+
+  .heading-card {
+    @apply text-xl md:text-2xl font-display font-semibold;
+  }
+
+  /* Shared gradient text utilities */
+  .gradient-text-primary {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+
+  .gradient-text-accent {
+    @apply bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent;
+  }
+
+  /* Hero-specific gradient (for landing page consistency) */
+  .hero-gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+
+  /* Glow text effect */
+  .glow-text {
+    @apply gradient-text-primary;
+  }
+
+  /* Neon glow effects */
+  .neon-glow {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+
+  .shadow-glow-sm {
+    box-shadow: 0 0 12px -2px hsl(var(--primary) / 0.4);
+  }
+
+  .shadow-glow-md {
+    box-shadow: 0 0 20px -4px hsl(var(--primary) / 0.5);
+  }
+
+  .shadow-glow-lg {
+    box-shadow: 0 0 32px -6px hsl(var(--primary) / 0.6);
+  }
+
+  /* Caffeine.ai specific glow effects */
+  .shadow-caffeine-glow-sm {
+    box-shadow: 0 0 12px -2px hsl(var(--caffeine-yellow) / 0.4);
+  }
+
+  .shadow-caffeine-glow-md {
+    box-shadow: 0 0 20px -4px hsl(var(--caffeine-yellow) / 0.5);
+  }
+
+  .shadow-caffeine-glow-lg {
+    box-shadow: 0 0 32px -6px hsl(var(--caffeine-yellow) / 0.6);
+  }
+
+  /* Shared background surfaces */
+  .surface-base {
+    @apply bg-background text-foreground;
+  }
+
+  .surface-card {
+    @apply bg-card text-card-foreground border border-border;
+  }
+
+  .surface-elevated {
+    @apply bg-card/50 backdrop-blur-sm border border-primary/20;
+  }
+
+  /* Shared gradient overlays */
+  .gradient-overlay-primary {
+    @apply bg-gradient-to-br from-primary/20 via-accent/10 to-secondary/20;
+  }
+
+  .gradient-overlay-subtle {
+    @apply bg-gradient-to-b from-transparent via-primary/5 to-transparent;
+  }
+
+  .gradient-overlay-accent {
+    @apply bg-gradient-to-b from-primary/5 to-accent/5;
+  }
+
+  /* Cyber grid background */
+  .cyber-grid {
+    background-image: linear-gradient(
+        to right,
+        hsl(var(--primary) / 0.05) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        hsl(var(--primary) / 0.05) 1px,
+        transparent 1px
+      );
+    background-size: 40px 40px;
+  }
+
+  /* Shared hover states for cards */
+  .card-hover {
+    @apply hover:border-primary/50 hover:shadow-glow-md transition-all duration-300;
+  }
+
+  .card-hover-scale {
+    @apply hover:border-primary/50 hover:shadow-glow-md hover:scale-[1.02] transition-all duration-300;
+  }
+
+  /* Caffeine.ai theme wrapper - scoped styling for About page */
+  .caffeine-theme-wrapper {
+    /* No global overrides - all styling is done via inline classes with Caffeine colors */
+  }
+
+  /* Smooth scroll behavior with reduced motion support */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* Animations */
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 8px currentColor);
+    }
+    50% {
+      filter: drop-shadow(0 0 16px currentColor);
+    }
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float-delayed {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+  }
+
+  .animate-float-delayed {
+    animation: float-delayed 4s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  @keyframes glow-text {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.5));
+    }
+    50% {
+      filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.7));
+    }
+  }
+
+  .animate-glow-text {
+    animation: glow-text 3s ease-in-out infinite;
+  }
+}
+
+/* Radix Dialog overlay - full screen with proper z-index */
+[data-radix-dialog-overlay] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 50 !important;
+}
+
+/* Radix Dialog content - centered positioning */
+[data-radix-dialog-content] {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 50 !important;
+}
