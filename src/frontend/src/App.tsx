@@ -35,6 +35,7 @@ import GamesPage from "./pages/GamesPage";
 import GlossaryPage from "./pages/GlossaryPage";
 import HangmanPage from "./pages/HangmanPage";
 import ICPEDIAPage from "./pages/ICPEDIAPage";
+import ICPediaResearchArticlePage from "./pages/ICPediaResearchArticlePage";
 import ImpactPage from "./pages/ImpactPage";
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -137,6 +138,16 @@ const icpediaRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/icpedia",
   component: ICPEDIAPage,
+});
+const icpediaResearchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/icpedia/research",
+  component: ICPEDIAPage,
+});
+const icpediaResearchArticleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/icpedia/research/$slug",
+  component: ICPediaResearchArticlePage,
 });
 const glossaryRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -249,6 +260,8 @@ const routeTree = rootRoute.addChildren([
   featuresRoute,
   impactRoute,
   icpediaRoute,
+  icpediaResearchRoute,
+  icpediaResearchArticleRoute,
   glossaryRoute,
   architectureRoute,
   coffeeBreakRoute,

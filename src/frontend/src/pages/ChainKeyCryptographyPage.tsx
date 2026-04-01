@@ -262,7 +262,7 @@ export default function ChainKeyCryptographyPage() {
               </div>
               <div className="order-1 md:order-2">
                 <img
-                  src="/assets/generated/chainkey-infographic-bridges-vs-ck-v3.dim_1600x900.png"
+                  src="/assets/generated/unlock-hidden-worlds-chainkey-infographic.dim_1200x800.png"
                   alt="Chain Key vs Bridges Comparison"
                   className="rounded-lg shadow-2xl w-full"
                 />
