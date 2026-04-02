@@ -5,6 +5,7 @@ export interface ResearchPaper {
   description: string;
   tags: string[];
   pdfPath: string;
+  videoId?: string;
   sections: Array<{ heading: string; body: string }>;
 }
 
@@ -17,6 +18,7 @@ export const researchPapers: ResearchPaper[] = [
       "An exploration of the threshold signature schemes and distributed key generation protocols that allow the Internet Computer to sign transactions on external blockchains without a bridge or custodian.",
     tags: ["cryptography", "security", "chain-key"],
     pdfPath: "/assets/pdfs/chain-key-cryptography.pdf",
+    videoId: "03OPlwxydxA",
     sections: [
       {
         heading: "What Is Chain-Key Cryptography?",

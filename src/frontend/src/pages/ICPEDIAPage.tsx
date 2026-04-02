@@ -1,3 +1,4 @@
+import LazyYouTubeEmbed from "@/components/LazyYouTubeEmbed";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,14 +16,13 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
   BookOpen,
   ChevronRight,
-  Download,
+  ExternalLink,
   FileText,
   Search,
   Tag,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-// Mock data for demonstration
 const mockTopics = [
   {
     topicId: "1",
@@ -48,6 +48,8 @@ const mockTopics = [
   },
 ];
 
+const YT_CHANNEL = "https://www.youtube.com/@justinjackbear";
+
 type Tab = "encyclopedia" | "research";
 
 export default function ICPEDIAPage() {
@@ -62,7 +64,6 @@ export default function ICPEDIAPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Sync tab if path changes externally
   useEffect(() => {
     if (location.pathname.includes("/research")) {
       setActiveTab("research");
@@ -85,6 +86,8 @@ export default function ICPEDIAPage() {
       !selectedCategory || topic.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const featuredPaper = researchPapers.find((p) => p.videoId);
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -136,10 +139,9 @@ export default function ICPEDIAPage() {
           </div>
         </div>
 
-        {/* ── ENCYCLOPEDIA TAB ── */}
+        {/* ENCYCLOPEDIA TAB */}
         {activeTab === "encyclopedia" && (
           <div>
-            {/* Glossary entry card */}
             <div className="mb-8">
               <Card
                 className="surface-elevated card-hover cursor-pointer border-dashed border-primary/30 hover:border-primary/60 transition-colors"
@@ -162,7 +164,6 @@ export default function ICPEDIAPage() {
               </Card>
             </div>
 
-            {/* Search and Filters */}
             <div className="mb-8 space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -175,7 +176,6 @@ export default function ICPEDIAPage() {
                   className="pl-10"
                 />
               </div>
-
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant={selectedCategory === null ? "default" : "outline"}
@@ -199,7 +199,6 @@ export default function ICPEDIAPage() {
               </div>
             </div>
 
-            {/* Topics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTopics.map((topic) => (
                 <Card
@@ -241,9 +240,51 @@ export default function ICPEDIAPage() {
           </div>
         )}
 
-        {/* ── RESEARCH TAB ── */}
+        {/* RESEARCH TAB */}
         {activeTab === "research" && (
           <div>
+            {/* Featured Video Card */}
+            {featuredPaper?.videoId && (
+              <Card
+                className="surface-elevated mb-10 overflow-hidden"
+                data-ocid="icpedia.research.featured_video.card"
+              >
+                <CardContent className="p-0">
+                  <LazyYouTubeEmbed
+                    videoId={featuredPaper.videoId}
+                    title="AI Doesn't Trust You"
+                    className="w-full rounded-t-xl"
+                  />
+                </CardContent>
+                <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4">
+                  <div>
+                    <p className="font-semibold text-sm">
+                      AI Doesn't Trust You
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      AI doesn't choose based on narrative — it chooses the most
+                      efficient path to execution.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 mt-1 font-mono">
+                      Bitcoin → Settlement&nbsp;&nbsp;ICP → Compute
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 flex items-center gap-2"
+                    onClick={() =>
+                      window.open(YT_CHANNEL, "_blank", "noopener,noreferrer")
+                    }
+                    data-ocid="icpedia.research.subscribe_button"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Subscribe for more research
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-1">Research Papers</h2>
               <p className="text-sm text-muted-foreground">
@@ -287,31 +328,17 @@ export default function ICPEDIAPage() {
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="flex gap-2 pt-2">
+                  <CardFooter className="pt-2">
                     <Button
                       data-ocid={`icpedia.research.read_button.${i + 1}`}
                       variant="default"
                       size="sm"
                       className="flex-1"
                       onClick={() =>
-                        navigate({
-                          to: `/icpedia/research/${paper.slug}`,
-                        })
+                        navigate({ to: `/icpedia/research/${paper.slug}` })
                       }
                     >
                       Read →
-                    </Button>
-                    <Button
-                      data-ocid={`icpedia.research.download_button.${i + 1}`}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-1.5"
-                      onClick={() =>
-                        window.open(paper.pdfPath, "_blank", "noopener")
-                      }
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      PDF
                     </Button>
                   </CardFooter>
                 </Card>
