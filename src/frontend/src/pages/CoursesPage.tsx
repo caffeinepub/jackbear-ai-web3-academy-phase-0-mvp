@@ -642,63 +642,91 @@ export default function CoursesPage() {
                 {isCoherence && !world8Unlocked ? (
                   // ── Phase 1 Coherence Key Panel ──────────────────────────
                   <div className="p-6 max-w-sm mx-auto text-center space-y-4">
-                    <p className="text-muted-foreground text-sm italic">
-                      Coherence is not given.
-                    </p>
-                    <p className="text-muted-foreground text-sm italic mb-2">
-                      It must be discovered.
-                    </p>
-                    <p className="text-muted-foreground/70 text-xs mb-4">
-                      Recover the three Coherence Keys by playing ICP Decode.
-                    </p>
-                    <div className="space-y-2 mb-4">
-                      {COHERENCE_KEY_IDS.map((keyId) => {
-                        const isRecovered =
-                          coherenceKeyState.recovered.includes(keyId);
-                        return (
-                          <div
-                            key={keyId}
-                            className={`flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                              isRecovered
-                                ? "text-violet-300"
-                                : "text-muted-foreground/40"
-                            }`}
-                          >
-                            <span>{isRecovered ? "✓" : "🔑"}</span>
-                            <span className="capitalize tracking-wide">
-                              {keyId}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-muted-foreground/50 italic">
-                      Only those who decode will find them.
-                    </p>
-                    {/* Play ICP Decode CTA — always visible inside the Coherence Key panel */}
-                    <button
-                      type="button"
-                      onClick={() => void navigate({ to: "/hangman" })}
-                      className="w-full py-2.5 rounded-lg border border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 hover:border-violet-500/70 text-violet-400 hover:text-violet-300 text-sm font-semibold transition-colors"
-                      data-ocid="coherence.play_decode.button"
-                    >
-                      🎮 Play ICP Decode
-                    </button>
-                    {coherenceKeyState.unlocked && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWorld8Unlocked(true);
-                          markSpecialWorldUnlocked.mutate("world-8");
-                          window.dispatchEvent(
-                            new CustomEvent("additions:world8-unlocked"),
-                          );
-                        }}
-                        className="mt-2 w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors"
-                        data-ocid="world8.unlock.button"
-                      >
-                        Unlock World 8: Coherence
-                      </button>
+                    {coherenceKeyState.unlocked ? (
+                      // ── Completed state ──
+                      <>
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-xs font-semibold tracking-widest text-violet-300 uppercase">
+                          <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                          COHERENCE ACHIEVED
+                        </div>
+                        <div className="space-y-2">
+                          {COHERENCE_KEY_IDS.map((keyId) => (
+                            <div
+                              key={keyId}
+                              className="flex items-center justify-center gap-2 text-sm font-medium text-violet-300"
+                            >
+                              <span>✓</span>
+                              <span className="capitalize tracking-wide">
+                                {keyId}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-violet-400/70 tracking-wide">
+                          All three Coherence Keys recovered.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWorld8Unlocked(true);
+                            markSpecialWorldUnlocked.mutate("world-8");
+                            window.dispatchEvent(
+                              new CustomEvent("additions:world8-unlocked"),
+                            );
+                          }}
+                          className="w-full py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors"
+                          data-ocid="world8.unlock.button"
+                        >
+                          Unlock World 8: Coherence
+                        </button>
+                      </>
+                    ) : (
+                      // ── In-progress state ──
+                      <>
+                        <p className="text-muted-foreground text-sm italic">
+                          Coherence is not given.
+                        </p>
+                        <p className="text-muted-foreground text-sm italic mb-2">
+                          It must be discovered.
+                        </p>
+                        <p className="text-muted-foreground/70 text-xs mb-4">
+                          Recover the three Coherence Keys by playing ICP
+                          Decode.
+                        </p>
+                        <div className="space-y-2 mb-4">
+                          {COHERENCE_KEY_IDS.map((keyId) => {
+                            const isRecovered =
+                              coherenceKeyState.recovered.includes(keyId);
+                            return (
+                              <div
+                                key={keyId}
+                                className={`flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                                  isRecovered
+                                    ? "text-violet-300"
+                                    : "text-muted-foreground/40"
+                                }`}
+                              >
+                                <span>{isRecovered ? "✓" : "○"}</span>
+                                <span className="capitalize tracking-wide">
+                                  {keyId}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-muted-foreground/50 italic">
+                          Only those who decode will find them.
+                        </p>
+                        {/* Play ICP Decode CTA */}
+                        <button
+                          type="button"
+                          onClick={() => void navigate({ to: "/hangman" })}
+                          className="w-full py-2.5 rounded-lg border border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 hover:border-violet-500/70 text-violet-400 hover:text-violet-300 text-sm font-semibold transition-colors"
+                          data-ocid="coherence.play_decode.button"
+                        >
+                          Play ICP Decode
+                        </button>
+                      </>
                     )}
                   </div>
                 ) : isBonus && world.lessons.length === 0 ? (

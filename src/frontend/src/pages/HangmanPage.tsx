@@ -5,6 +5,7 @@ import {
   readCoherenceKeys,
 } from "@/lib/coherenceKeys";
 import { allGlossaryTerms } from "@/lib/glossaryData";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useActor } from "../hooks/useActor";
 import { useCompleteQuest } from "../hooks/useQueries";
@@ -86,19 +87,17 @@ function pickRandom() {
       : FALLBACK_WORDS;
 
   // Soft Coherence Key weighting:
-  // If there are unrecovered keys, build a weighted pool by duplicating
-  // unrecovered key entries (6x weight) so they surface naturally but
-  // never feel forced. Normal glossary terms always dominate the pool.
+  // Normal unrecovered keys: 6x boost entries in the pool.
+  // FINAL key (only one remaining): 18x boost — makes it feel inevitable, not frustrating.
   const coherenceState = readCoherenceKeys();
   const unrecoveredKeyTerms = Object.keys(COHERENCE_KEY_MAP).filter(
     (term) => !coherenceState.recovered.includes(COHERENCE_KEY_MAP[term]),
   );
+  const isFinalKey = unrecoveredKeyTerms.length === 1;
 
   let candidatePool = source;
 
   if (unrecoveredKeyTerms.length > 0) {
-    // Stronger boost: for each unrecovered key, add 6 extra copies of
-    // that term entry into the pool (if it exists in the glossary).
     const boostEntries = unrecoveredKeyTerms.flatMap((keyTerm) => {
       const entry = source.find(
         (item) =>
@@ -107,7 +106,11 @@ function pickRandom() {
             .replace(/[^A-Z ]/g, "")
             .trim() === keyTerm,
       );
-      return entry ? [entry, entry, entry, entry, entry, entry] : [];
+      if (!entry) return [];
+      // Final key: 18x copies (~20% chance in 70-term pool).
+      // Normal unrecovered key: 6x copies (~8% chance).
+      const copies = isFinalKey ? 18 : 6;
+      return Array(copies).fill(entry) as typeof source;
     });
     candidatePool =
       boostEntries.length > 0 ? [...source, ...boostEntries] : source;
@@ -160,7 +163,56 @@ function buildWordRows(w: string): WordSlot[][] {
   );
 }
 
+// ── Coherence Achieved Modal ──────────────────────────────────────────────────
+function CoherenceAchievedModal({ onEnter }: { onEnter: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="relative mx-4 w-full max-w-sm rounded-2xl border border-violet-500/50 bg-[hsl(var(--card))] shadow-[0_0_0_1px_rgba(139,92,246,0.3),0_0_60px_rgba(139,92,246,0.15)] p-8 text-center">
+        {/* Ambient glow ring */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none overflow-hidden">
+          <div className="absolute inset-[-1px] rounded-2xl border border-violet-400/20" />
+        </div>
+
+        {/* Status chip */}
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-xs font-semibold tracking-widest text-violet-300 uppercase mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+          SYSTEM UNLOCK
+        </div>
+
+        {/* Title */}
+        <h2 className="text-2xl font-bold tracking-[0.15em] text-white uppercase mb-2 font-mono">
+          COHERENCE ACHIEVED
+        </h2>
+
+        {/* Divider */}
+        <div className="w-16 h-px bg-violet-500/40 mx-auto mb-5" />
+
+        {/* Body */}
+        <p className="text-sm text-muted-foreground mb-3">
+          All three keys have been recovered.
+        </p>
+        <p className="text-sm font-semibold tracking-widest text-violet-300 mb-3">
+          Identity. Consensus. Compute.
+        </p>
+        <p className="text-sm text-muted-foreground mb-8">
+          The Verifiable Intelligence Layer is now unlocked.
+        </p>
+
+        {/* CTA */}
+        <button
+          type="button"
+          onClick={onEnter}
+          className="w-full py-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold tracking-wide transition-colors"
+        >
+          Enter Intelligence
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function HangmanPage() {
+  const navigate = useNavigate();
   const [word, setWord] = useState("");
   const [originalTerm, setOriginalTerm] = useState("");
   const [definition, setDefinition] = useState("");
@@ -177,6 +229,8 @@ export default function HangmanPage() {
   // Tracks repeat solves of an already-recovered coherence key
   const [keyAlreadyKnown, setKeyAlreadyKnown] = useState(false);
   const [rewardSuccess, setRewardSuccess] = useState(false);
+  // Coherence Achieved modal — shown when all 3 keys are recovered
+  const [showCoherenceModal, setShowCoherenceModal] = useState(false);
 
   const completeQuest = useCompleteQuest();
   const { actor } = useActor();
@@ -198,6 +252,7 @@ export default function HangmanPage() {
     setRecoveredKeyInfo(null);
     setKeyAlreadyKnown(false);
     setRewardSuccess(false);
+    // Do NOT reset showCoherenceModal here — it should persist until dismissed
   }, []);
 
   useEffect(() => {
@@ -270,6 +325,11 @@ export default function HangmanPage() {
       window.dispatchEvent(
         new CustomEvent("jb:coherence-key-recovered", { detail: newState }),
       );
+      // Trigger the payoff modal when all 3 keys are now recovered
+      if (newState.unlocked) {
+        // Small delay so the win screen renders first, then the modal sweeps in
+        setTimeout(() => setShowCoherenceModal(true), 600);
+      }
     } else {
       setKeyAlreadyKnown(true);
     }
@@ -322,6 +382,16 @@ export default function HangmanPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Coherence Achieved modal — renders above everything */}
+      {showCoherenceModal && (
+        <CoherenceAchievedModal
+          onEnter={() => {
+            setShowCoherenceModal(false);
+            void navigate({ to: "/intelligence" });
+          }}
+        />
+      )}
+
       <div className="max-w-lg mx-auto py-10 px-4" data-ocid="hangman.page">
         <h1 className="text-3xl font-bold text-center mb-2 tracking-tight">
           ICP Decode
@@ -434,38 +504,40 @@ export default function HangmanPage() {
                   Glossary mastery increased
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Glossary mastery increased
-              </p>
               {COHERENCE_KEY_MAP[word] && (
                 <p className="text-xs text-yellow-400/80 font-medium">
-                  🔑 Coherence fragment recovered
+                  Coherence fragment recovered
                 </p>
               )}
             </div>
 
-            {/* Coherence Key first-time discovery feedback */}
-            {recoveredKeyInfo && (
+            {/* Coherence Key first-time discovery feedback — non-final key */}
+            {recoveredKeyInfo && !recoveredKeyInfo.isAllUnlocked && (
               <div className="mt-4 rounded-lg border border-violet-500/40 bg-violet-500/10 px-4 py-3 text-center">
                 <p className="text-sm font-semibold text-violet-300 mb-1">
-                  🔑 Coherence Key Discovered
+                  Coherence Key Recovered
                 </p>
                 <p className="text-base font-bold text-violet-200 tracking-widest uppercase mb-1">
                   {recoveredKeyInfo.keyId}
                 </p>
                 <p className="text-xs text-violet-400/80 mb-1">
-                  Used to unlock World 8: Coherence
+                  {recoveredKeyInfo.count} / 3 keys recovered
                 </p>
-                {!recoveredKeyInfo.isAllUnlocked && (
-                  <p className="text-xs text-violet-400/80">
-                    Continue decoding to discover all three
-                  </p>
-                )}
-                {recoveredKeyInfo.isAllUnlocked && (
-                  <p className="text-xs text-violet-300 font-semibold mt-1">
-                    Coherence achieved.
-                  </p>
-                )}
+                <p className="text-xs text-violet-400/80">
+                  Continue decoding to discover all three
+                </p>
+              </div>
+            )}
+
+            {/* Final key recovered — show a bridge to the modal */}
+            {recoveredKeyInfo?.isAllUnlocked && (
+              <div className="mt-4 rounded-lg border border-violet-500/60 bg-violet-500/15 px-4 py-4 text-center">
+                <p className="text-sm font-bold text-violet-200 tracking-widest uppercase mb-2">
+                  COHERENCE ACHIEVED
+                </p>
+                <p className="text-xs text-violet-300/80">
+                  All three keys recovered.
+                </p>
               </div>
             )}
 
@@ -473,7 +545,7 @@ export default function HangmanPage() {
             {keyAlreadyKnown && !recoveredKeyInfo && (
               <div className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-4 py-3 text-center">
                 <p className="text-sm text-yellow-400/70">
-                  🔑 Key already discovered
+                  Key already recovered
                 </p>
               </div>
             )}
