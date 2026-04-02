@@ -456,6 +456,20 @@ export const world2GlossaryTermsEN: GlossaryTermData[] = [
     fullDescription:
       "Inter-canister calls enable canisters to invoke functions on other canisters, creating composable applications. Update calls modify state and are processed through consensus, while query calls are read-only and execute quickly. This composability allows developers to build complex applications from simple, reusable components. Cross-canister communication is secure, efficient, and enables sophisticated application architectures.",
   },
+  {
+    term: "Compute",
+    definition:
+      "The processing power and execution capacity provided by ICP canisters, measured in cycles and consumed during on-chain computation.",
+    category: "ICP",
+    tags: ["Web3", "ICP", "World 2", "Infrastructure"],
+    relatedTopics: ["Canisters", "Cycles", "Execution"],
+    relatedLessons: ["World 2: ICP Fundamentals"],
+    externalReferences: [
+      "https://internetcomputer.org/docs/current/concepts/canisters-code",
+    ],
+    fullDescription:
+      "Compute on ICP refers to the execution capacity allocated to canisters when they process messages, run smart contract logic, or serve web content. Every computation consumes cycles, which are the stable-cost fuel of the Internet Computer. Unlike cloud platforms where compute is rented from centralized providers, ICP compute runs on a decentralized subnet of node machines governed by the NNS. This makes canister compute verifiable, censorship-resistant, and predictably priced.",
+  },
 ];
 
 // Spanish translations for World 2 terms

@@ -74,6 +74,10 @@ const COHERENCE_KEY_MAP: Record<string, CoherenceKeyId> = {
 type GameState = "playing" | "won" | "lost";
 type WordSlot = { letter: string; slotId: string };
 
+// Recent words buffer — module-level so it persists across game resets in the same session
+const recentWordsBuffer: string[] = [];
+const RECENT_BUFFER_SIZE = 6;
+
 function pickRandom() {
   // Primary source: full glossary pool. Fallback only if glossary unavailable.
   const source =
@@ -109,12 +113,37 @@ function pickRandom() {
       boostEntries.length > 0 ? [...source, ...boostEntries] : source;
   }
 
-  const item = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+  // Anti-repeat buffer: exclude recently seen words when the pool is large enough.
+  // Single re-roll only — never loop, never block a valid selection.
+  const pickOne = () =>
+    candidatePool[Math.floor(Math.random() * candidatePool.length)];
+
+  let item = pickOne();
+  const normalizeWord = (t: string) =>
+    t
+      .toUpperCase()
+      .replace(/[^A-Z ]/g, "")
+      .trim();
+
+  if (
+    recentWordsBuffer.length > 0 &&
+    candidatePool.length > recentWordsBuffer.length
+  ) {
+    const normalized = normalizeWord(item.term);
+    if (recentWordsBuffer.includes(normalized)) {
+      item = pickOne(); // single re-roll — accept whatever comes next
+    }
+  }
+
   // Preserve spaces so multi-word terms render as separate rows
-  const normalized = item.term
-    .toUpperCase()
-    .replace(/[^A-Z ]/g, "")
-    .trim();
+  const normalized = normalizeWord(item.term);
+
+  // Update recent-words buffer
+  recentWordsBuffer.push(normalized);
+  if (recentWordsBuffer.length > RECENT_BUFFER_SIZE) {
+    recentWordsBuffer.shift();
+  }
+
   return {
     word: normalized,
     originalTerm: item.term,
@@ -147,6 +176,7 @@ export default function HangmanPage() {
   } | null>(null);
   // Tracks repeat solves of an already-recovered coherence key
   const [keyAlreadyKnown, setKeyAlreadyKnown] = useState(false);
+  const [rewardSuccess, setRewardSuccess] = useState(false);
 
   const completeQuest = useCompleteQuest();
   const { actor } = useActor();
@@ -167,6 +197,7 @@ export default function HangmanPage() {
     setHintRevealedLetter(null);
     setRecoveredKeyInfo(null);
     setKeyAlreadyKnown(false);
+    setRewardSuccess(false);
   }, []);
 
   useEffect(() => {
@@ -210,6 +241,7 @@ export default function HangmanPage() {
         xpReward: BigInt(xp),
       })
       .then(() => {
+        setRewardSuccess(true);
         window.dispatchEvent(
           new CustomEvent("bear-points-awarded", {
             detail: { amount: bp, source: "hangman" },
@@ -393,9 +425,15 @@ export default function HangmanPage() {
             {/* Post-solve feedback panel — shown for all words */}
             <div className="mt-4 rounded-lg border border-border/40 bg-muted/30 px-4 py-3 text-center space-y-1">
               <p className="text-sm font-semibold text-green-400">✓ Correct</p>
-              <p className="text-xs text-muted-foreground">
-                +{HANGMAN_REWARDS[DEFAULT_DIFFICULTY].bp} BP earned
-              </p>
+              {rewardSuccess ? (
+                <p className="text-xs text-muted-foreground">
+                  +{HANGMAN_REWARDS[DEFAULT_DIFFICULTY].bp} BP earned
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Glossary mastery increased
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 Glossary mastery increased
               </p>
