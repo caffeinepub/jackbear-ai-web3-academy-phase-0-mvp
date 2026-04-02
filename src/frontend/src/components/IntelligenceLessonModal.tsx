@@ -1,12 +1,15 @@
 /**
  * IntelligenceLessonModal — Strict pass/fail quiz model for the Verifiable
- * Intelligence Layer (Modules 01–03+).
+ * Intelligence Layer (Modules 01–05).
  *
  * Key differences from LessonModal:
  * - Standard lessons require 100% correct answers to pass.
  * - On fail: NO backend calls, NO BP awarded, NO lesson completion marked.
  * - On pass: submitQuiz + completeLesson called as normal.
  * - Mega Quizzes (id contains "mq" or "quiz") use the standard 70% threshold.
+ * - Answer options are shuffled per-question at quiz entry to prevent
+ *   predictable correct-position patterns. Shuffle is deterministic within
+ *   a given quiz session; pass/fail logic uses the remapped correct index.
  *
  * DO NOT use this for Worlds 0–8. Use LessonModal for those.
  */
@@ -20,7 +23,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { emitQuizSubmitSignal } from "../additions/quizSignals";
 import { useActor } from "../hooks/useActor";
 import {
@@ -57,6 +60,58 @@ function showBPToast(amount: number, source: "lesson" | "quiz") {
   } catch {}
 }
 
+/**
+ * Fisher-Yates shuffle using a seeded pseudo-random number generator so that
+ * the shuffle is deterministic within a session but unpredictable across
+ * different lesson openings.
+ */
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const out = [...arr];
+  let s = seed;
+  for (let i = out.length - 1; i > 0; i--) {
+    // lcg step
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const j = Math.abs(s) % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/** Per-question shuffled options + remapped correctAnswer index. */
+interface ShuffledQuestion {
+  question: string;
+  shuffledOptions: string[];
+  /** correctAnswer remapped to the new shuffled position */
+  remappedCorrect: number;
+  originalId: string;
+  explanation: string;
+}
+
+/**
+ * Build the shuffled question list once per quiz session. Each question gets
+ * an independent shuffle seed derived from the lesson id and question index
+ * plus a per-session salt, so the order changes every time the quiz is opened.
+ */
+function buildShuffledQuestions(
+  questions: LessonContent["quiz"]["questions"],
+  sessionSalt: number,
+): ShuffledQuestion[] {
+  return questions.map((q, qi) => {
+    const seed = sessionSalt ^ (qi * 2654435761);
+    const indices = q.options.map((_, i) => i);
+    const shuffledIndices = seededShuffle(indices, seed);
+    const shuffledOptions = shuffledIndices.map((i) => q.options[i]);
+    const remappedCorrect = shuffledIndices.indexOf(q.correctAnswer);
+    return {
+      question: q.question,
+      shuffledOptions,
+      remappedCorrect,
+      originalId: String(q.id),
+      explanation: q.explanation,
+    };
+  });
+}
+
 export default function IntelligenceLessonModal({
   lesson,
   worldId,
@@ -89,6 +144,22 @@ export default function IntelligenceLessonModal({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Per-session salt: generated once on mount so the shuffle is stable within
+   * a single lesson opening but different each time the modal is opened.
+   */
+  const sessionSalt = useMemo(() => (Math.random() * 0xffffffff) | 0, []);
+
+  /**
+   * Shuffled questions — computed once per session. Stable across retries
+   * within the same modal open (same salt), but re-shuffled on next open.
+   */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: questions and hasQuiz are stable per lessonId; sessionSalt provides the per-open re-shuffle seed
+  const shuffledQuestions = useMemo(
+    () => (hasQuiz ? buildShuffledQuestions(questions, sessionSalt) : []),
+    [sessionSalt],
+  );
+
   const { actor } = useActor();
   const submitQuiz = useSubmitQuiz();
   const completeLesson = useCompleteLesson();
@@ -100,7 +171,9 @@ export default function IntelligenceLessonModal({
   }, [lessonId]);
 
   const isLastSlide = slideIdx === slides.length - 1;
-  const allAnswered = questions.every((_, qi) => answers[qi] !== undefined);
+  const allAnswered = shuffledQuestions.every(
+    (_, qi) => answers[qi] !== undefined,
+  );
 
   // ── content navigation ────────────────────────────────────────────────────
   const handleNext = () => {
@@ -145,14 +218,17 @@ export default function IntelligenceLessonModal({
     if (!hasQuiz || !actor || isSubmitting) return;
     setIsSubmitting(true);
 
-    const evaluated = questions.map((q, qi) => ({
-      questionId: String(q.id),
+    // Evaluate using the shuffled (display) question list.
+    // answers[qi] is the index into shuffledOptions; remappedCorrect is also
+    // an index into shuffledOptions — so comparison is direct and correct.
+    const evaluated = shuffledQuestions.map((sq, qi) => ({
+      questionId: sq.originalId,
       selectedAnswer: String(answers[qi] ?? -1),
-      isCorrect: (answers[qi] ?? -1) === q.correctAnswer,
+      isCorrect: (answers[qi] ?? -1) === sq.remappedCorrect,
     }));
 
     const localScore = evaluated.filter((a) => a.isCorrect).length;
-    const total = questions.length;
+    const total = shuffledQuestions.length;
 
     // Determine pass threshold:
     // Mega Quiz → 70% (standard). Standard lesson → 100% (all correct).
@@ -369,47 +445,45 @@ export default function IntelligenceLessonModal({
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  {questions.length} question{questions.length !== 1 ? "s" : ""}
+                  {shuffledQuestions.length} question
+                  {shuffledQuestions.length !== 1 ? "s" : ""}
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-5">
-              {questions.map((q, qi) => {
-                const opts = q.options ?? [];
-                return (
-                  <div // biome-ignore lint/suspicious/noArrayIndexKey: stable
-                    key={qi}
-                    className="flex flex-col gap-2"
-                  >
-                    <p className="text-sm font-medium">
-                      {qi + 1}. {q.question}
-                    </p>
-                    <div className="flex flex-col gap-1.5">
-                      {opts.map((opt: string, oi: number) => {
-                        const selected = answers[qi] === oi;
-                        return (
-                          <button
-                            type="button"
-                            // biome-ignore lint/suspicious/noArrayIndexKey: stable
-                            key={oi}
-                            onClick={() =>
-                              setAnswers((prev) => ({ ...prev, [qi]: oi }))
-                            }
-                            className={`text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
-                              selected
-                                ? "border-primary bg-primary/10 text-primary"
-                                : "border-border hover:border-primary/50 hover:bg-muted"
-                            }`}
-                          >
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
+              {shuffledQuestions.map((sq, qi) => (
+                <div // biome-ignore lint/suspicious/noArrayIndexKey: stable within session
+                  key={qi}
+                  className="flex flex-col gap-2"
+                >
+                  <p className="text-sm font-medium">
+                    {qi + 1}. {sq.question}
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {sq.shuffledOptions.map((opt: string, oi: number) => {
+                      const selected = answers[qi] === oi;
+                      return (
+                        <button
+                          type="button"
+                          // biome-ignore lint/suspicious/noArrayIndexKey: stable within session
+                          key={oi}
+                          onClick={() =>
+                            setAnswers((prev) => ({ ...prev, [qi]: oi }))
+                          }
+                          className={`text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
+                            selected
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border hover:border-primary/50 hover:bg-muted"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
@@ -455,12 +529,12 @@ export default function IntelligenceLessonModal({
                   <h3 className="text-xl font-bold mb-1">PASSED</h3>
                   {hasQuiz && (
                     <p className="text-sm text-muted-foreground">
-                      Score: {score} / {questions.length}
+                      Score: {score} / {shuffledQuestions.length}
                     </p>
                   )}
                   {hasQuiz && bestScore > 0 && (
                     <p className="text-xs text-primary mt-1 font-medium">
-                      Best: {bestScore} / {questions.length}
+                      Best: {bestScore} / {shuffledQuestions.length}
                     </p>
                   )}
                 </div>
@@ -511,17 +585,18 @@ export default function IntelligenceLessonModal({
                   <h3 className="text-xl font-bold mb-1">NOT PASSED</h3>
                   {hasQuiz && (
                     <p className="text-sm text-muted-foreground">
-                      Score: {score} / {questions.length}
+                      Score: {score} / {shuffledQuestions.length}
                       {!megaQuiz && (
                         <span className="ml-1 text-xs text-muted-foreground/70">
-                          — {questions.length}/{questions.length} required
+                          — {shuffledQuestions.length}/
+                          {shuffledQuestions.length} required
                         </span>
                       )}
                     </p>
                   )}
                   {bestScore > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Best attempt: {bestScore} / {questions.length}
+                      Best attempt: {bestScore} / {shuffledQuestions.length}
                     </p>
                   )}
                 </div>
