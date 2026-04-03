@@ -1,6 +1,7 @@
 import { incrementLoginCount } from "@/additions/eggHints";
 import { emitStreak7DaySignal } from "@/additions/quizSignals";
 import { AnimatedXPBar } from "@/components/AnimatedXPBar";
+import DevTestPanel from "@/components/DevTestPanel";
 import NextActionCard from "@/components/NextActionCard";
 import { UsernameEditor } from "@/components/UsernameEditor";
 import BPLedgerWidget from "@/components/dashboard/BPLedgerWidget";
@@ -391,6 +392,10 @@ export default function DashboardPage() {
             }
           />
         )}
+
+        {/* ── DEV TESTING PANEL (draft-only, invisible in production) ─── */}
+        <DevTestPanel />
+        {/* ── END DEV TESTING PANEL ───────────────────────────────────── */}
 
         {/* ═══════════════════════════════════════════════════
             TOP ACTIONS — primary interaction zone
