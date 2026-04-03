@@ -2,14 +2,14 @@
  * MyCertificatesSection.tsx
  *
  * Dashboard section: "My Credentials"
- * Shows one row per earned certificate (worlds where all lessons + boss are done).
+ * Shows one row per earned certificate (worlds where all lessons are done).
  * Actions: Download PDF, Reprint PDF, Copy Verification Link, Open Verification Page,
  *          Share on X, Share on LinkedIn.
  *
  * Reuses:
  *   - downloadCertificate() from lib/generateCertificate
  *   - WORLDS / WorldDef from CoursesPage
- *   - isLessonUnlockedInWorld / isBossCompleted from lib/worldProgress
+ *   - isLessonUnlockedInWorld from lib/worldProgress
  *   - CertificateShareSection for X / LinkedIn / Facebook / Email / Copy
  *
  * No backend dependency. No changes to completion logic.
@@ -33,7 +33,6 @@ import {
 import { useState } from "react";
 import { downloadCertificate } from "../../lib/generateCertificate";
 import { isLessonUnlockedInWorld } from "../../lib/worldProgress";
-import { isBossCompleted } from "../../lib/worldProgress";
 import { WORLDS, type WorldDef } from "../../pages/CoursesPage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,15 +52,18 @@ interface MyCertificatesSectionProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * A world qualifies for "My Credentials" when all its lessons are completed.
+ * Boss Quiz completion is NOT required — its progress entry may be absent,
+ * named differently, or not yet loaded without affecting certificate eligibility.
+ */
 function isWorldFullyComplete(
   world: WorldDef,
   progress: LessonProgress[],
 ): boolean {
-  const allLessons = world.lessons.every((lesson) =>
+  return world.lessons.every((lesson) =>
     isLessonUnlockedInWorld(lesson.id, progress),
   );
-  const bossAttempted = isBossCompleted(world.id, progress);
-  return allLessons && bossAttempted;
 }
 
 function buildXShareText(worldTitle: string, url: string): string {
