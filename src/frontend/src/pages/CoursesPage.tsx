@@ -874,6 +874,7 @@ export default function CoursesPage() {
                           onClick={() =>
                             downloadCertificate({
                               worldTitle: world.title,
+                              worldSubtitle: world.subtitle,
                               principal: identity
                                 ? identity.getPrincipal().toText()
                                 : undefined,

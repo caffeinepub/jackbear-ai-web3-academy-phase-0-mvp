@@ -12,186 +12,267 @@
 
 export interface CertificateOptions {
   worldTitle: string;
+  worldSubtitle?: string;
   principal?: string;
 }
 
-// ─── UUID helper ────────────────────────────────────────────────────────────
+// ─── Certificate ID generator ───────────────────────────────────────────────
 
-function generateUUID(): string {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  // Fallback for older environments
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
+function generateCertId(): string {
+  const timestamp = Date.now();
+  const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
+  return `JB-WORLD-${timestamp}-${suffix}`;
+}
+
+// ─── Date formatter ─────────────────────────────────────────────────────────
+
+function formatIssuedDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+// ─── Logo loader ────────────────────────────────────────────────────────────
+
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
 }
 
 // ─── Canvas drawing ─────────────────────────────────────────────────────────
 
-function drawCertificate(
+async function drawCertificate(
   canvas: HTMLCanvasElement,
   opts: CertificateOptions,
   certId: string,
   dateStr: string,
-): void {
+): Promise<void> {
   const W = canvas.width;
   const H = canvas.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // ── Background ────────────────────────────────────────────────────────────
-  ctx.fillStyle = "#0f1117";
+  // ── Background — clean white / off-white for premium academic feel ─────────
+  ctx.fillStyle = "#fafafa";
   ctx.fillRect(0, 0, W, H);
 
   // ── Outer border ─────────────────────────────────────────────────────────
-  const borderPad = 24;
-  ctx.strokeStyle = "#4f4f6a";
+  const borderPad = 28;
+  ctx.strokeStyle = "#c8c8d8";
   ctx.lineWidth = 1.5;
   ctx.strokeRect(borderPad, borderPad, W - borderPad * 2, H - borderPad * 2);
 
-  // ── Inner accent border ───────────────────────────────────────────────────
-  const innerPad = 34;
-  ctx.strokeStyle = "#7c3aed40";
-  ctx.lineWidth = 1;
+  // ── Inner thin border ────────────────────────────────────────────────────
+  const innerPad = 38;
+  ctx.strokeStyle = "#e0dff0";
+  ctx.lineWidth = 0.75;
   ctx.strokeRect(innerPad, innerPad, W - innerPad * 2, H - innerPad * 2);
 
-  // ── Corner accents ────────────────────────────────────────────────────────
-  const cornerSize = 20;
-  const corners = [
+  // ── Corner accents (minimal, dark ink) ───────────────────────────────────
+  const cornerLen = 18;
+  const corners: [number, number][] = [
     [borderPad, borderPad],
-    [W - borderPad - cornerSize, borderPad],
-    [borderPad, H - borderPad - cornerSize],
-    [W - borderPad - cornerSize, H - borderPad - cornerSize],
-  ] as [number, number][];
+    [W - borderPad - cornerLen, borderPad],
+    [borderPad, H - borderPad - cornerLen],
+    [W - borderPad - cornerLen, H - borderPad - cornerLen],
+  ];
   ctx.strokeStyle = "#7c3aed";
   ctx.lineWidth = 2;
   for (const [cx, cy] of corners) {
     ctx.beginPath();
-    ctx.moveTo(cx + cornerSize, cy);
+    ctx.moveTo(cx + cornerLen, cy);
     ctx.lineTo(cx, cy);
-    ctx.lineTo(cx, cy + cornerSize);
+    ctx.lineTo(cx, cy + cornerLen);
     ctx.stroke();
   }
 
-  // ── Top label ─────────────────────────────────────────────────────────────
+  // ── Logo ──────────────────────────────────────────────────────────────────
+  const logo = await loadImage("/assets/jbailogo-5.png");
+  const logoH = 40;
+  const logoTopY = 72;
+  if (logo) {
+    const logoAspect = logo.naturalWidth / logo.naturalHeight;
+    const logoW = Math.round(logoH * logoAspect);
+    ctx.drawImage(logo, Math.round(W / 2 - logoW / 2), logoTopY, logoW, logoH);
+  } else {
+    // Fallback text logo if image fails
+    ctx.textAlign = "center";
+    ctx.font = "bold 15px monospace";
+    ctx.fillStyle = "#7c3aed";
+    ctx.letterSpacing = "3px";
+    ctx.fillText("JACKBEAR.AI", W / 2, logoTopY + logoH - 6);
+    ctx.letterSpacing = "0px";
+  }
+
+  // ── Issuer label under logo ───────────────────────────────────────────────
   ctx.textAlign = "center";
-  ctx.font = "bold 11px monospace";
-  ctx.fillStyle = "#7c3aed";
-  ctx.letterSpacing = "6px";
-  ctx.fillText("VERIFIABLE INTELLIGENCE INFRASTRUCTURE", W / 2, 90);
+  ctx.font = "11px sans-serif";
+  ctx.fillStyle = "#9090a8";
+  ctx.letterSpacing = "2px";
+  ctx.fillText("JACKBEAR.AI ACADEMY", W / 2, logoTopY + logoH + 22);
   ctx.letterSpacing = "0px";
 
-  // ── Divider ───────────────────────────────────────────────────────────────
-  const divY = 105;
-  const divGrad = ctx.createLinearGradient(120, divY, W - 120, divY);
-  divGrad.addColorStop(0, "transparent");
-  divGrad.addColorStop(0.3, "#7c3aed");
-  divGrad.addColorStop(0.7, "#7c3aed");
-  divGrad.addColorStop(1, "transparent");
-  ctx.strokeStyle = divGrad;
+  // ── Top rule ─────────────────────────────────────────────────────────────
+  const rule1Y = logoTopY + logoH + 38;
+  const ruleGrad = ctx.createLinearGradient(140, rule1Y, W - 140, rule1Y);
+  ruleGrad.addColorStop(0, "transparent");
+  ruleGrad.addColorStop(0.25, "#c8c8d8");
+  ruleGrad.addColorStop(0.75, "#c8c8d8");
+  ruleGrad.addColorStop(1, "transparent");
+  ctx.strokeStyle = ruleGrad;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(120, divY);
-  ctx.lineTo(W - 120, divY);
+  ctx.moveTo(140, rule1Y);
+  ctx.lineTo(W - 140, rule1Y);
   ctx.stroke();
 
-  // ── Title ─────────────────────────────────────────────────────────────────
-  ctx.font = "bold 52px serif";
-  ctx.fillStyle = "#f8f8ff";
-  ctx.fillText("Certificate of Completion", W / 2, 195);
+  // ── Certificate of Completion heading ────────────────────────────────────
+  ctx.font = "bold 48px Georgia, serif";
+  ctx.fillStyle = "#1a1a2e";
+  ctx.textAlign = "center";
+  ctx.fillText("Certificate of Completion", W / 2, rule1Y + 68);
 
   // ── Body copy ─────────────────────────────────────────────────────────────
-  ctx.font = "18px sans-serif";
-  ctx.fillStyle = "#a0a0b8";
+  ctx.font = "italic 16px Georgia, serif";
+  ctx.fillStyle = "#5a5a72";
   ctx.fillText(
-    "This certifies that the user has successfully completed",
+    "This certifies that the user has successfully completed all lessons and assessments in",
     W / 2,
-    250,
+    rule1Y + 106,
   );
-  ctx.fillText("all lessons and assessments in", W / 2, 276);
 
-  // ── World subtitle ────────────────────────────────────────────────────────
-  // Wrap long world titles gracefully
-  const maxTitleWidth = W - 160;
-  ctx.font = "bold 30px serif";
-  ctx.fillStyle = "#c4b5fd";
+  // ── World title ───────────────────────────────────────────────────────────
+  const maxTitleWidth = W - 180;
+  ctx.font = "bold 30px Georgia, serif";
+  ctx.fillStyle = "#2d1b69";
   const titleText = opts.worldTitle;
+  let titleBottomY: number;
   if (ctx.measureText(titleText).width > maxTitleWidth) {
-    // Simple split on " — " or ":" if present
     const splitIdx = titleText.indexOf(": ");
-    if (splitIdx !== -1) {
-      ctx.fillText(titleText.slice(0, splitIdx + 1), W / 2, 330);
-      ctx.fillText(titleText.slice(splitIdx + 2), W / 2, 368);
+    const splitIdx2 = titleText.indexOf(" — ");
+    const splitAt =
+      splitIdx !== -1 ? splitIdx : splitIdx2 !== -1 ? splitIdx2 : -1;
+    if (splitAt !== -1) {
+      const sep = splitIdx !== -1 ? ": " : " — ";
+      ctx.fillText(
+        titleText.slice(0, splitAt + (sep === ": " ? 1 : 0)),
+        W / 2,
+        rule1Y + 152,
+      );
+      ctx.fillText(titleText.slice(splitAt + sep.length), W / 2, rule1Y + 190);
+      titleBottomY = rule1Y + 190;
     } else {
-      ctx.font = "bold 24px serif";
-      ctx.fillText(titleText, W / 2, 348);
+      ctx.font = "bold 24px Georgia, serif";
+      ctx.fillText(titleText, W / 2, rule1Y + 166);
+      titleBottomY = rule1Y + 166;
     }
   } else {
-    ctx.fillText(titleText, W / 2, 348);
+    ctx.fillText(titleText, W / 2, rule1Y + 166);
+    titleBottomY = rule1Y + 166;
   }
 
-  // ── Divider 2 ─────────────────────────────────────────────────────────────
-  const div2Y = 415;
-  ctx.strokeStyle = divGrad;
+  // ── World subtitle ────────────────────────────────────────────────────────
+  if (opts.worldSubtitle) {
+    ctx.font = "italic 15px Georgia, serif";
+    ctx.fillStyle = "#7c3aed";
+    ctx.fillText(opts.worldSubtitle, W / 2, titleBottomY + 32);
+    titleBottomY = titleBottomY + 32;
+  }
+
+  // ── Mid rule ─────────────────────────────────────────────────────────────
+  const rule2Y = titleBottomY + 52;
+  ctx.strokeStyle = ruleGrad;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(120, div2Y);
-  ctx.lineTo(W - 120, div2Y);
+  ctx.moveTo(140, rule2Y);
+  ctx.lineTo(W - 140, rule2Y);
   ctx.stroke();
 
-  // ── Metadata block ────────────────────────────────────────────────────────
-  const metaBaseY = 455;
-  const metaLineHeight = 26;
-  ctx.font = "13px monospace";
-  ctx.textAlign = "center";
+  // ── Signature block ───────────────────────────────────────────────────────
+  // Left side: signature
+  const sigColX = 240;
+  const sigBaseY = rule2Y + 52;
 
-  ctx.fillStyle = "#6b6b84";
-  ctx.fillText("DATE ISSUED", W / 2 - 240, metaBaseY);
-  ctx.fillStyle = "#c8c8d8";
-  ctx.fillText(dateStr, W / 2 - 240, metaBaseY + metaLineHeight);
-
-  ctx.fillStyle = "#6b6b84";
-  ctx.fillText("CERTIFICATE ID", W / 2, metaBaseY);
-  ctx.fillStyle = "#c8c8d8";
-  ctx.font = "11px monospace";
-  ctx.fillText(certId, W / 2, metaBaseY + metaLineHeight);
-
-  if (opts.principal) {
-    ctx.font = "13px monospace";
-    ctx.fillStyle = "#6b6b84";
-    ctx.fillText("PRINCIPAL", W / 2 + 240, metaBaseY);
-    ctx.fillStyle = "#c8c8d8";
-    ctx.font = "9px monospace";
-    // Truncate principal for display
-    const shortPrincipal =
-      opts.principal.length > 20
-        ? `${opts.principal.slice(0, 10)}...${opts.principal.slice(-5)}`
-        : opts.principal;
-    ctx.fillText(shortPrincipal, W / 2 + 240, metaBaseY + metaLineHeight);
-  }
-
-  // ── Footer divider ────────────────────────────────────────────────────────
-  const footerDivY = H - 90;
-  ctx.strokeStyle = divGrad;
+  // Signature rule
+  ctx.strokeStyle = "#c8c8d8";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(120, footerDivY);
-  ctx.lineTo(W - 120, footerDivY);
+  ctx.moveTo(sigColX - 80, sigBaseY - 4);
+  ctx.lineTo(sigColX + 80, sigBaseY - 4);
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.font = "bold 14px Georgia, serif";
+  ctx.fillStyle = "#1a1a2e";
+  ctx.fillText("Justin JackBear", sigColX, sigBaseY + 18);
+  ctx.font = "12px sans-serif";
+  ctx.fillStyle = "#9090a8";
+  ctx.fillText("Founder, JackBear.ai", sigColX, sigBaseY + 36);
+
+  // Right side: date
+  const dateColX = W - 240;
+  ctx.strokeStyle = "#c8c8d8";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(dateColX - 80, sigBaseY - 4);
+  ctx.lineTo(dateColX + 80, sigBaseY - 4);
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.font = "bold 14px Georgia, serif";
+  ctx.fillStyle = "#1a1a2e";
+  ctx.fillText(dateStr, dateColX, sigBaseY + 18);
+  ctx.font = "12px sans-serif";
+  ctx.fillStyle = "#9090a8";
+  ctx.fillText("Date Issued", dateColX, sigBaseY + 36);
+
+  // ── Certificate ID ────────────────────────────────────────────────────────
+  const certIdY = sigBaseY + 72;
+  ctx.textAlign = "center";
+  ctx.font = "10px monospace";
+  ctx.fillStyle = "#b0b0c8";
+  ctx.letterSpacing = "1px";
+  ctx.fillText(`Certificate ID: ${certId}`, W / 2, certIdY);
+  ctx.letterSpacing = "0px";
+
+  // Principal (if available)
+  if (opts.principal) {
+    const shortPrincipal =
+      opts.principal.length > 24
+        ? `${opts.principal.slice(0, 12)}...${opts.principal.slice(-6)}`
+        : opts.principal;
+    ctx.font = "9px monospace";
+    ctx.fillStyle = "#c0c0d0";
+    ctx.fillText(`Principal: ${shortPrincipal}`, W / 2, certIdY + 18);
+  }
+
+  // ── Bottom rule ───────────────────────────────────────────────────────────
+  const footerRuleY = H - 62;
+  ctx.strokeStyle = ruleGrad;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(140, footerRuleY);
+  ctx.lineTo(W - 140, footerRuleY);
   ctx.stroke();
 
   // ── Footer ────────────────────────────────────────────────────────────────
-  ctx.font = "bold 14px monospace";
-  ctx.fillStyle = "#7c3aed";
   ctx.textAlign = "center";
-  ctx.letterSpacing = "2px";
-  ctx.fillText("JackBear.ai", W / 2, H - 60);
-  ctx.letterSpacing = "0px";
   ctx.font = "11px monospace";
-  ctx.fillStyle = "#4f4f6a";
-  ctx.fillText("Verifiable Intelligence Infrastructure", W / 2, H - 40);
+  ctx.fillStyle = "#7c3aed";
+  ctx.letterSpacing = "1.5px";
+  ctx.fillText(
+    "JackBear.ai — Verifiable Intelligence Infrastructure",
+    W / 2,
+    H - 38,
+  );
+  ctx.letterSpacing = "0px";
 }
 
 // ─── Minimal PDF builder ─────────────────────────────────────────────────────
@@ -201,38 +282,26 @@ function drawCertificate(
  * Does not require any external PDF library.
  */
 function buildPdfBlob(jpegDataUrl: string): Blob {
-  // Strip the data URL prefix to get the raw base64 string
   const base64Data = jpegDataUrl.split(",")[1];
   const imageBytes = atob(base64Data);
   const imageLength = imageBytes.length;
 
-  // PDF dimensions in points (1pt = 1/72 inch)
-  // Canvas is 1200x850px; use 72dpi equivalent → 1200x850pt for full bleed
   const pageWidthPt = 1200;
   const pageHeightPt = 850;
 
-  // Build PDF objects as text + binary
   const enc = new TextEncoder();
 
-  // Object 1: catalog
   const obj1 = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
-
-  // Object 2: pages
   const obj2 = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
-
-  // Object 3: page
   const obj3 = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidthPt} ${pageHeightPt}] /Contents 4 0 R /Resources << /XObject << /Im1 5 0 R >> >> >>\nendobj\n`;
 
-  // Object 4: content stream — draw image filling the page
   const contentStream = `q\n${pageWidthPt} 0 0 ${pageHeightPt} 0 0 cm\n/Im1 Do\nQ\n`;
   const contentStreamBytes = enc.encode(contentStream);
   const obj4 = `4 0 obj\n<< /Length ${contentStreamBytes.length} >>\nstream\n${contentStream}endstream\nendobj\n`;
 
-  // Object 5: image XObject (JPEG)
   const obj5Header = `5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pageWidthPt} /Height ${pageHeightPt} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageLength} >>\nstream\n`;
   const obj5Footer = "\nendstream\nendobj\n";
 
-  // Calculate byte offsets for xref table
   const offsets: number[] = [];
   let offset = 0;
 
@@ -240,30 +309,29 @@ function buildPdfBlob(jpegDataUrl: string): Blob {
   const headerBytes = enc.encode(header);
   offset += headerBytes.length;
 
-  offsets.push(offset); // obj1
+  offsets.push(offset);
   const obj1Bytes = enc.encode(obj1);
   offset += obj1Bytes.length;
 
-  offsets.push(offset); // obj2
+  offsets.push(offset);
   const obj2Bytes = enc.encode(obj2);
   offset += obj2Bytes.length;
 
-  offsets.push(offset); // obj3
+  offsets.push(offset);
   const obj3Bytes = enc.encode(obj3);
   offset += obj3Bytes.length;
 
-  offsets.push(offset); // obj4
+  offsets.push(offset);
   const obj4Bytes = enc.encode(obj4);
   offset += obj4Bytes.length;
 
-  offsets.push(offset); // obj5
+  offsets.push(offset);
   const obj5HeaderBytes = enc.encode(obj5Header);
   const obj5FooterBytes = enc.encode(obj5Footer);
 
   const xrefOffset =
     offset + obj5HeaderBytes.length + imageLength + obj5FooterBytes.length;
 
-  // Build xref table
   function padOffset(n: number): string {
     return n.toString().padStart(10, "0");
   }
@@ -280,11 +348,9 @@ function buildPdfBlob(jpegDataUrl: string): Blob {
 
   const trailer = `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
 
-  // Assemble all parts into a single Uint8Array
   const xrefBytes = enc.encode(xref);
   const trailerBytes = enc.encode(trailer);
 
-  // Convert image string to Uint8Array
   const imageUint8 = new Uint8Array(imageLength);
   for (let i = 0; i < imageLength; i++) {
     imageUint8[i] = imageBytes.charCodeAt(i);
@@ -319,27 +385,20 @@ function buildPdfBlob(jpegDataUrl: string): Blob {
 /**
  * Generates and downloads a certificate PDF for the given world.
  */
-export function downloadCertificate(opts: CertificateOptions): void {
-  const certId = generateUUID();
-  const dateStr = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+export async function downloadCertificate(
+  opts: CertificateOptions,
+): Promise<void> {
+  const certId = generateCertId();
+  const dateStr = formatIssuedDate();
 
-  // Draw on an offscreen canvas
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
   canvas.height = 850;
-  drawCertificate(canvas, opts, certId, dateStr);
+  await drawCertificate(canvas, opts, certId, dateStr);
 
-  // Export as JPEG (smaller than PNG, good enough for certificate)
   const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.95);
-
-  // Build PDF blob
   const pdfBlob = buildPdfBlob(jpegDataUrl);
 
-  // Trigger download
   const url = URL.createObjectURL(pdfBlob);
   const link = document.createElement("a");
   const safeTitle = opts.worldTitle
