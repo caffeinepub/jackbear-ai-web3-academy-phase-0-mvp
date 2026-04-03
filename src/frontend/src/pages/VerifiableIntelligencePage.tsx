@@ -431,27 +431,15 @@ function SystemStatusHeader({
   ];
 
   return (
-    <div
-      className="rounded-xl border border-border/40 overflow-hidden"
-      style={{ backgroundColor: "oklch(0.12 0.02 270)" }}
-    >
+    <div className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm overflow-hidden">
       {/* Header bar */}
-      <div
-        className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border/40"
-        style={{ backgroundColor: "oklch(0.09 0.015 270)" }}
-      >
+      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border/40 bg-muted/30">
         <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-mono font-semibold uppercase tracking-widest text-muted-foreground">
           System Status
         </span>
         <span className="ml-auto flex items-center gap-1.5">
-          <span className="relative inline-flex h-1.5 w-1.5">
-            <span
-              className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"
-              style={{ animationDuration: "2s" }}
-            />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-          </span>
+          <span className="inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
           <span className="text-xs font-mono text-emerald-400/80">online</span>
         </span>
       </div>
@@ -933,29 +921,14 @@ export default function VerifiableIntelligencePage() {
 
   return (
     <>
-      <div
-        className="min-h-screen relative"
-        style={{ backgroundColor: "oklch(0.10 0.015 270)" }}
-      >
-        {/* Intelligence zone depth layer */}
-        <div
-          className="fixed inset-0 pointer-events-none z-0"
-          aria-hidden="true"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px)
-            `,
-            backgroundSize: "48px 48px",
-          }}
-        />
+      <div className="min-h-screen bg-background">
         {/* Hero */}
-        <section className="relative overflow-hidden border-b border-border/40 z-10">
+        <section className="relative overflow-hidden border-b border-border/40">
           <div
             className="absolute inset-0 pointer-events-none"
             aria-hidden="true"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-950/60 via-transparent to-cyan-950/40" />
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-background to-cyan-950/20 dark:from-violet-950/50 dark:via-background dark:to-cyan-950/30" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-500/5 rounded-full blur-3xl" />
           </div>
 
@@ -1001,7 +974,7 @@ export default function VerifiableIntelligencePage() {
         </section>
 
         {/* Main content */}
-        <section className="container py-12 md:py-16 relative z-10">
+        <section className="container py-12 md:py-16">
           {isUnlocked ? (
             <div className="space-y-8">
               {/* System Status Header */}
@@ -1046,40 +1019,18 @@ export default function VerifiableIntelligencePage() {
                         | "mod-05"
                     ];
 
-                  const isComplete =
-                    (isModule01 && module01Complete) ||
-                    (isModule02 && module02Complete) ||
-                    (isModule03 && module03Complete) ||
-                    (isModule04 && module04Complete) ||
-                    (isModule05 && module05Complete);
-                  const isInProgress =
-                    isAvailable &&
-                    !isComplete &&
-                    prog &&
-                    prog.lessonsAttempted > 0;
-
                   return (
                     <div
                       key={mod.id}
                       data-ocid={`intelligence.${mod.id}.card`}
                       className={`relative rounded-2xl border overflow-hidden transition-all ${
-                        isComplete
-                          ? "border-emerald-500/30 bg-card shadow-lg shadow-emerald-500/5"
-                          : isInProgress
-                            ? "border-cyan-500/30 bg-card shadow-lg shadow-cyan-500/5"
-                            : isAvailable
-                              ? "border-violet-500/30 bg-card shadow-lg shadow-violet-500/5"
-                              : "border-border/30 bg-card/50 opacity-60"
+                        isAvailable
+                          ? "border-violet-500/30 bg-card shadow-lg shadow-violet-500/5"
+                          : "border-border/30 bg-card/50 opacity-60"
                       }`}
                     >
-                      {/* Top accent line — state-dependent */}
-                      {isComplete && (
-                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
-                      )}
-                      {!isComplete && isInProgress && (
-                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
-                      )}
-                      {!isComplete && !isInProgress && isAvailable && (
+                      {/* Top accent line — only for available */}
+                      {isAvailable && (
                         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
                       )}
 
@@ -1090,13 +1041,9 @@ export default function VerifiableIntelligencePage() {
                             <div className="flex items-center gap-2 mb-3">
                               <span
                                 className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-widest border ${
-                                  isComplete
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                    : isInProgress
-                                      ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                                      : isAvailable
-                                        ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
-                                        : "bg-muted/40 text-muted-foreground/60 border-border/30"
+                                  isAvailable
+                                    ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                                    : "bg-muted/40 text-muted-foreground/60 border-border/30"
                                 }`}
                               >
                                 {mod.number}
@@ -1107,26 +1054,8 @@ export default function VerifiableIntelligencePage() {
                                   Locked
                                 </span>
                               )}
-                              {isComplete && (
+                              {isAvailable && (
                                 <span className="inline-flex items-center gap-1 text-xs text-emerald-400/80 font-mono">
-                                  <span className="inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />{" "}
-                                  Completed
-                                </span>
-                              )}
-                              {!isComplete && isInProgress && (
-                                <span className="inline-flex items-center gap-1 text-xs text-cyan-400/80 font-mono">
-                                  <span className="relative inline-flex h-1.5 w-1.5">
-                                    <span
-                                      className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-60"
-                                      style={{ animationDuration: "2.5s" }}
-                                    />
-                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
-                                  </span>{" "}
-                                  In Progress
-                                </span>
-                              )}
-                              {!isComplete && !isInProgress && isAvailable && (
-                                <span className="inline-flex items-center gap-1 text-xs text-violet-400/80 font-mono">
                                   <StatusDot status="active" />
                                   Available
                                 </span>
@@ -1225,11 +1154,9 @@ export default function VerifiableIntelligencePage() {
                                 setModule05Expanded((v) => !v);
                             }}
                             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-md shrink-0 ${
-                              isComplete
-                                ? "bg-emerald-700 hover:bg-emerald-600 text-white cursor-pointer"
-                                : isAvailable
-                                  ? "bg-violet-600 hover:bg-violet-500 text-white cursor-pointer"
-                                  : "bg-muted/40 text-muted-foreground/50 cursor-not-allowed border border-border/30"
+                              isAvailable
+                                ? "bg-violet-600 hover:bg-violet-500 text-white cursor-pointer"
+                                : "bg-muted/40 text-muted-foreground/50 cursor-not-allowed border border-border/30"
                             }`}
                           >
                             {!isAvailable && <Lock className="h-3.5 w-3.5" />}
