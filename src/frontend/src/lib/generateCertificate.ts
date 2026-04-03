@@ -22,6 +22,11 @@ export interface CertificateOptions {
   principal?: string;
 }
 
+export interface DownloadCertificateResult {
+  verifyUrl: string;
+  certificateId: string;
+}
+
 // ─── Date formatter ──────────────────────────────────────────────────────────────────
 
 function formatIssuedDate(): string {
@@ -391,10 +396,11 @@ function buildPdfBlob(jpegDataUrl: string): Blob {
 /**
  * Generates and downloads a certificate PDF for the given world.
  * Phase 1: embeds an integrity-verification URL derived from payloadHash + issuedNonce.
+ * Returns { verifyUrl, certificateId } so callers can surface the share URL.
  */
 export async function downloadCertificate(
   opts: CertificateOptions,
-): Promise<void> {
+): Promise<DownloadCertificateResult> {
   const dateStr = formatIssuedDate();
 
   // Build integrity token (async — uses Web Crypto SHA-256)
@@ -426,4 +432,6 @@ export async function downloadCertificate(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+
+  return { verifyUrl, certificateId };
 }

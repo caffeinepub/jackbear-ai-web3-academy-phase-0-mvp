@@ -20,6 +20,7 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { LessonProgress } from "../backend";
+import CertificateShareSection from "../components/CertificateShareSection";
 import LessonModal from "../components/LessonModal";
 import MegaQuizModal from "../components/MegaQuizModal";
 import PlaceholderLessonModal from "../components/PlaceholderLessonModal";
@@ -334,6 +335,10 @@ export default function CoursesPage() {
   } | null>(null);
   const [dismissedWorldShares, setDismissedWorldShares] = useState<Set<string>>(
     new Set(),
+  );
+  // Map of worldId → verifyUrl (populated when certificate is downloaded)
+  const [certVerifyUrls, setCertVerifyUrls] = useState<Record<string, string>>(
+    {},
   );
 
   // Track which worlds have already had world-completion share triggered this session
@@ -869,30 +874,42 @@ export default function CoursesPage() {
                       </button>
                       {/* Download Certificate */}
                       {isWorldFullyComplete && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            downloadCertificate({
-                              worldTitle: world.title,
-                              worldSubtitle: world.subtitle,
-                              principal: identity
-                                ? identity.getPrincipal().toText()
-                                : undefined,
-                            })
-                          }
-                          className="mt-3 w-full p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:scale-[1.01] transition-all duration-200 bg-gradient-to-r from-violet-500/20 to-purple-600/20 border border-violet-500/40 hover:border-violet-500/70"
-                          data-ocid="world.download_certificate.button"
-                        >
-                          <Award className="w-5 h-5 text-violet-400" />
-                          <div className="text-left">
-                            <p className="text-sm font-bold text-violet-400">
-                              Download Certificate
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              World complete — claim your certificate
-                            </p>
-                          </div>
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              downloadCertificate({
+                                worldTitle: world.title,
+                                worldSubtitle: world.subtitle,
+                                principal: identity
+                                  ? identity.getPrincipal().toText()
+                                  : undefined,
+                              }).then(({ verifyUrl }) => {
+                                setCertVerifyUrls((prev) => ({
+                                  ...prev,
+                                  [world.id]: verifyUrl,
+                                }));
+                              })
+                            }
+                            className="mt-3 w-full p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:scale-[1.01] transition-all duration-200 bg-gradient-to-r from-violet-500/20 to-purple-600/20 border border-violet-500/40 hover:border-violet-500/70"
+                            data-ocid="world.download_certificate.button"
+                          >
+                            <Award className="w-5 h-5 text-violet-400" />
+                            <div className="text-left">
+                              <p className="text-sm font-bold text-violet-400">
+                                Download Certificate
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                World complete — claim your certificate
+                              </p>
+                            </div>
+                          </button>
+                          <CertificateShareSection
+                            worldTitle={world.title}
+                            verifyUrl={certVerifyUrls[world.id] ?? ""}
+                            fallbackUrl="https://jackbear.ai"
+                          />
+                        </>
                       )}
                     </div>
                   </>
