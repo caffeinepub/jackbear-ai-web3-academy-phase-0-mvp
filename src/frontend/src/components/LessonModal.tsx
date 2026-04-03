@@ -88,6 +88,7 @@ export default function LessonModal({
   const markAttempted = useMarkLessonAttempted();
   const completeLesson = useCompleteLesson();
   const [bonusCopy, setBonusCopy] = React.useState<string | null>(null);
+  const [rewardSuccess, setRewardSuccess] = React.useState(false);
   const submitQuiz = useSubmitQuiz();
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
@@ -201,6 +202,7 @@ export default function LessonModal({
             lessonId,
             completionResult.bpAwarded ?? creditsReward,
           );
+          setRewardSuccess(true);
           // Show bonus copy if applicable
           const bonusLines: string[] = [];
           if (completionResult.dailyBonusApplied)
@@ -340,6 +342,7 @@ export default function LessonModal({
       }
 
       if (result.passed && !alreadyCompleted) {
+        setRewardSuccess(true);
         showCompletionToast("quiz", lessonId, creditsReward);
         triggerShareCard(actor, identity);
         onLessonComplete?.(lessonId, creditsReward);
@@ -358,6 +361,7 @@ export default function LessonModal({
   };
 
   const handleRetry = () => {
+    setRewardSuccess(false);
     setPhase("quiz");
     setQuizState((prev) => ({
       ...prev,
@@ -596,24 +600,33 @@ export default function LessonModal({
               </div>
 
               <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Award className="w-4 h-4" />
-                  {hasQuiz ? 50 : (lesson.xpReward ?? 50)} XP earned
-                  <span className="text-[10px] opacity-50 font-normal">
-                    — learning progress
+                {rewardSuccess ? (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <Award className="w-4 h-4" />
+                      {hasQuiz ? 50 : (lesson.xpReward ?? 50)} XP earned
+                      <span className="text-[10px] opacity-50 font-normal">
+                        — learning progress
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1 text-amber-500">
+                      <Award className="w-4 h-4" />
+                      {hasQuiz ? 20 : 10} BP recorded
+                      <span className="text-[10px] opacity-50 font-normal text-muted-foreground">
+                        — leaderboard points
+                      </span>
+                    </span>
+                    {bonusCopy && (
+                      <p className="text-xs text-emerald-500 dark:text-emerald-400 font-medium mt-1">
+                        {bonusCopy}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Award className="w-4 h-4" />
+                    {quizState.passed ? "Completed" : "Progress recorded"}
                   </span>
-                </span>
-                <span className="flex items-center gap-1 text-amber-500">
-                  <Award className="w-4 h-4" />
-                  {hasQuiz ? 20 : 10} BP recorded
-                  <span className="text-[10px] opacity-50 font-normal text-muted-foreground">
-                    — leaderboard points
-                  </span>
-                </span>
-                {bonusCopy && (
-                  <p className="text-xs text-emerald-500 dark:text-emerald-400 font-medium mt-1">
-                    {bonusCopy}
-                  </p>
                 )}
               </div>
 

@@ -143,6 +143,7 @@ export default function IntelligenceLessonModal({
     () => getLocalBestScore(lessonId) ?? 0,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rewardSuccess, setRewardSuccess] = useState(false);
 
   /**
    * Per-session salt: generated once on mount so the shuffle is stable within
@@ -200,6 +201,7 @@ export default function IntelligenceLessonModal({
       if (result.isFirstCompletion) {
         showBPToast(result.bpAwarded ?? 10, "lesson");
       }
+      setRewardSuccess(true);
       onLessonComplete?.(lessonId, result.bpAwarded ?? 0);
     } catch {}
     setResultKind("pass");
@@ -287,6 +289,7 @@ export default function IntelligenceLessonModal({
         if (!backendResult.isFirstPass) {
           onLessonComplete?.(lessonId, 0);
         } else {
+          setRewardSuccess(true);
           window.dispatchEvent(
             new CustomEvent("jb:bp-write-success", {
               detail: { source: "quiz", amount: 20 },
@@ -316,6 +319,7 @@ export default function IntelligenceLessonModal({
     setAnswers({});
     setScore(0);
     setResultKind("none");
+    setRewardSuccess(false);
     setPhase("quiz");
   };
 
@@ -540,14 +544,23 @@ export default function IntelligenceLessonModal({
                 </div>
 
                 <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Award className="w-4 h-4" />
-                    {hasQuiz ? 50 : (lesson.xpReward ?? 50)} XP recorded
-                  </span>
-                  <span className="flex items-center gap-1 text-amber-500">
-                    <Award className="w-4 h-4" />
-                    {hasQuiz ? 20 : 10} BP recorded
-                  </span>
+                  {rewardSuccess ? (
+                    <>
+                      <span className="flex items-center gap-1">
+                        <Award className="w-4 h-4" />
+                        {hasQuiz ? 50 : (lesson.xpReward ?? 50)} XP recorded
+                      </span>
+                      <span className="flex items-center gap-1 text-amber-500">
+                        <Award className="w-4 h-4" />
+                        {hasQuiz ? 20 : 10} BP recorded
+                      </span>
+                    </>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <Award className="w-4 h-4" />
+                      Progress recorded
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex gap-2 mt-2">
