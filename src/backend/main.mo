@@ -1204,6 +1204,7 @@ actor {
   // All other lesson IDs pass through unchanged.
   func migrateWorld0Id(lessonId : Text) : Text {
     switch (lessonId) {
+      case ("0.0")  { "0.00" };
       case ("0.1")  { "0.00" };
       case ("0.2")  { "0.10" };
       case ("0.3")  { "0.20" };

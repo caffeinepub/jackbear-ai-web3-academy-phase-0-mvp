@@ -24,6 +24,7 @@ const LS_BEST_SCORES_KEY = "jb_best_scores";
 // IMPORTANT: "0.10" is canonical (lesson 2), NOT a legacy ID — do not include it here.
 // The 10th legacy lesson would have been stored as "0.1" (float coercion), already mapped above.
 const LEGACY_WORLD0_ID_MAP: Record<string, string> = {
+  "0.0": "0.00",
   "0.1": "0.00",
   "0.2": "0.10",
   "0.3": "0.20",
