@@ -1,4 +1,8 @@
 import {
+  ModuleAchievementsBadges,
+  type ModuleBadgeInfo,
+} from "@/components/ModuleAchievementsBadges";
+import {
   Activity,
   Award,
   BarChart3,
@@ -1780,6 +1784,43 @@ export default function VerifiableIntelligencePage() {
                   );
                 })}
               </div>
+
+              {/* ── Module Achievements — persistent badges for completed modules ── */}
+              {(() => {
+                const badgeModules: ModuleBadgeInfo[] = [
+                  {
+                    id: "mod-01",
+                    number: "Module 01",
+                    title: "Decentralized AI",
+                    completed: module01Complete,
+                  },
+                  {
+                    id: "mod-02",
+                    number: "Module 02",
+                    title: "Agent Systems",
+                    completed: module02Complete,
+                  },
+                  {
+                    id: "mod-03",
+                    number: "Module 03",
+                    title: "Autonomous Systems",
+                    completed: module03Complete,
+                  },
+                  {
+                    id: "mod-04",
+                    number: "Module 04",
+                    title: "Agent Economy",
+                    completed: module04Complete,
+                  },
+                  {
+                    id: "mod-05",
+                    number: "Module 05",
+                    title: "Sovereign Systems",
+                    completed: module05Complete,
+                  },
+                ];
+                return <ModuleAchievementsBadges modules={badgeModules} />;
+              })()}
 
               {/* ── Intelligence Certificate — visible only after all modules complete ── */}
               {allModulesComplete && (
