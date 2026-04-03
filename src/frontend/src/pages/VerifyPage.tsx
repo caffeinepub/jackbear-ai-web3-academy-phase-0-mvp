@@ -190,14 +190,31 @@ export default function VerifyPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card
+              className={
+                state.payload.certType === "intelligence"
+                  ? "border-yellow-500/30 bg-[#0d0d14]"
+                  : undefined
+              }
+            >
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                  Certificate Details
+                <CardTitle
+                  className={`text-sm font-medium uppercase tracking-wider ${state.payload.certType === "intelligence" ? "text-yellow-500/70" : "text-muted-foreground"}`}
+                >
+                  {state.payload.certType === "intelligence"
+                    ? "Intelligence Certification Details"
+                    : "Certificate Details"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <DetailRow label="World" value={state.payload.worldTitle} />
+                {state.payload.certType === "intelligence" ? (
+                  <DetailRow
+                    label="Certification"
+                    value={state.payload.worldTitle}
+                  />
+                ) : (
+                  <DetailRow label="World" value={state.payload.worldTitle} />
+                )}
                 {state.payload.worldSubtitle && (
                   <DetailRow
                     label="Subtitle"

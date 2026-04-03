@@ -27,6 +27,8 @@ export interface CertPayload {
   platform: "JackBear.ai";
   issuedNonce: string; // crypto.randomUUID() — collision prevention
   payloadHash: string; // SHA-256 hex of canonical payload (this field excluded from hash)
+  /** Optional cert type — "world" (default) or "intelligence" */
+  certType?: "world" | "intelligence";
 }
 
 export interface BuildTokenResult {
@@ -95,6 +97,7 @@ export async function buildCertToken(opts: {
   worldTitle: string;
   worldSubtitle: string;
   principal: string | null;
+  certType?: "world" | "intelligence";
 }): Promise<BuildTokenResult> {
   const now = new Date();
   const issuedAt = now.toISOString();
@@ -115,6 +118,7 @@ export async function buildCertToken(opts: {
     principal: opts.principal,
     platform: "JackBear.ai",
     issuedNonce,
+    ...(opts.certType ? { certType: opts.certType } : {}),
   };
 
   const payloadHash = await sha256Hex(

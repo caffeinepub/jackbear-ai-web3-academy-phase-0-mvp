@@ -1,5 +1,6 @@
 import {
   Activity,
+  Award,
   BarChart3,
   Binary,
   Bitcoin,
@@ -21,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import CertificateShareSection from "../components/CertificateShareSection";
 import IntelligenceLessonModal from "../components/IntelligenceLessonModal";
 import {
   SovereignShareModal,
@@ -30,6 +32,7 @@ import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useSovereignMode } from "../hooks/useSovereignMode";
 import { type CoherenceKeyId, readCoherenceKeys } from "../lib/coherenceKeys";
 import { isDevUnlocked } from "../lib/devUnlock";
+import { downloadIntelligenceCertificate } from "../lib/generateIntelligenceCertificate";
 import type { LessonContent } from "../lib/lessonContent";
 import {
   module01LessonsEN,
@@ -723,6 +726,7 @@ function LessonRowBadge({ state }: { state: LessonRowState }) {
 export default function VerifiableIntelligencePage() {
   const { isUnlocked, isDevBypass } = useIntelligenceUnlock();
   const isSovereign = useSovereignMode();
+  const { identity } = useInternetIdentity();
   const {
     shouldShow: showSovereignShareIntel,
     dismiss: dismissSovereignShareIntel,
@@ -754,6 +758,10 @@ export default function VerifiableIntelligencePage() {
   const [lessonProgress, setLessonProgress] = useState(() =>
     getLessonProgress(),
   );
+  const [intelligenceCertVerifyUrl, setIntelligenceCertVerifyUrl] = useState<
+    string | null
+  >(null);
+  const [isGeneratingCert, setIsGeneratingCert] = useState(false);
 
   const [moduleProgress, setModuleProgress] = useState(() => ({
     "mod-01": getModuleProgress(
@@ -931,6 +939,27 @@ export default function VerifiableIntelligencePage() {
     "mod-04": module03Complete,
     "mod-05": module04Complete,
   };
+
+  // Intelligence certificate: available when all 5 modules are complete
+  const allModulesComplete =
+    module01Complete &&
+    module02Complete &&
+    module03Complete &&
+    module04Complete &&
+    module05Complete;
+
+  async function handleDownloadIntelligenceCert() {
+    if (isGeneratingCert) return;
+    setIsGeneratingCert(true);
+    try {
+      const principalText = identity?.getPrincipal().toText() ?? null;
+      const { verifyUrl } =
+        await downloadIntelligenceCertificate(principalText);
+      setIntelligenceCertVerifyUrl(verifyUrl);
+    } finally {
+      setIsGeneratingCert(false);
+    }
+  }
 
   // Determine worldId based on active lesson
   const activeWorldId =
@@ -1726,6 +1755,87 @@ export default function VerifiableIntelligencePage() {
                   );
                 })}
               </div>
+
+              {/* ── Intelligence Certificate — visible only after all modules complete ── */}
+              {allModulesComplete && (
+                <div
+                  className="mt-8 rounded-2xl border overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #0d0d14 0%, #111118 60%, #0a0a10 100%)",
+                    borderColor: "rgba(212,175,55,0.35)",
+                  }}
+                  data-ocid="intelligence.certificate.section"
+                >
+                  {/* Gold top-edge accent */}
+                  <div
+                    className="absolute inset-x-0 top-0 h-px"
+                    style={{
+                      background:
+                        "linear-gradient(to right, transparent, rgba(212,175,55,0.7), transparent)",
+                    }}
+                  />
+                  <div className="relative p-6 md:p-8">
+                    {/* Header row */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-widest border"
+                        style={{
+                          background: "rgba(212,175,55,0.10)",
+                          borderColor: "rgba(212,175,55,0.35)",
+                          color: "#d4af37",
+                        }}
+                      >
+                        <Award className="h-3 w-3" />
+                        Intelligence Layer Complete
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      Verifiable Intelligence Certification
+                    </h3>
+                    <p
+                      className="text-sm mb-5"
+                      style={{ color: "rgba(212,175,55,0.75)" }}
+                    >
+                      Sovereign Compute · Identity · Consensus
+                    </p>
+
+                    {/* Download button */}
+                    <button
+                      type="button"
+                      disabled={isGeneratingCert}
+                      onClick={handleDownloadIntelligenceCert}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{
+                        background: isGeneratingCert
+                          ? "rgba(212,175,55,0.08)"
+                          : "rgba(212,175,55,0.14)",
+                        border: "1.5px solid rgba(212,175,55,0.45)",
+                        color: "#d4af37",
+                      }}
+                      data-ocid="intelligence.certificate.download"
+                    >
+                      <Award className="h-4 w-4" />
+                      {isGeneratingCert
+                        ? "Generating…"
+                        : "Download Intelligence Certificate"}
+                    </button>
+
+                    {/* Share section — appears after cert generated */}
+                    {intelligenceCertVerifyUrl && (
+                      <div className="mt-4">
+                        <CertificateShareSection
+                          worldTitle="Verifiable Intelligence Certification"
+                          verifyUrl={intelligenceCertVerifyUrl}
+                          fallbackUrl="https://jackbear.ai/intelligence"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Share Achievement — visible only in Sovereign Mode */}
               {isSovereign && (
