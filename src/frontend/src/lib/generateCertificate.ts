@@ -5,26 +5,24 @@
  * wraps it in a minimal hand-crafted single-page PDF blob,
  * and triggers a browser download.
  *
+ * Phase 1: embeds a self-contained integrity-verification URL in the footer.
+ * The certificateId and verifyUrl are derived from certToken.ts.
+ *
  * Zero external dependencies — uses only the browser Canvas API.
  */
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+import { buildCertToken } from "./certToken";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CertificateOptions {
+  worldId?: string;
   worldTitle: string;
   worldSubtitle?: string;
   principal?: string;
 }
 
-// ─── Certificate ID generator ───────────────────────────────────────────────
-
-function generateCertId(): string {
-  const timestamp = Date.now();
-  const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
-  return `JB-WORLD-${timestamp}-${suffix}`;
-}
-
-// ─── Date formatter ─────────────────────────────────────────────────────────
+// ─── Date formatter ──────────────────────────────────────────────────────────────────
 
 function formatIssuedDate(): string {
   return new Date().toLocaleDateString("en-US", {
@@ -34,7 +32,7 @@ function formatIssuedDate(): string {
   });
 }
 
-// ─── Logo loader ────────────────────────────────────────────────────────────
+// ─── Logo loader ───────────────────────────────────────────────────────────────────
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -46,20 +44,21 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-// ─── Canvas drawing ─────────────────────────────────────────────────────────
+// ─── Canvas drawing ─────────────────────────────────────────────────────────────────
 
 async function drawCertificate(
   canvas: HTMLCanvasElement,
   opts: CertificateOptions,
   certId: string,
   dateStr: string,
+  verifyUrl: string,
 ): Promise<void> {
   const W = canvas.width;
   const H = canvas.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // ── Background — clean white / off-white for premium academic feel ─────────
+  // ── Background — clean white / off-white for premium academic feel ─────────────
   ctx.fillStyle = "#fafafa";
   ctx.fillRect(0, 0, W, H);
 
@@ -69,13 +68,13 @@ async function drawCertificate(
   ctx.lineWidth = 1.5;
   ctx.strokeRect(borderPad, borderPad, W - borderPad * 2, H - borderPad * 2);
 
-  // ── Inner thin border ────────────────────────────────────────────────────
+  // ── Inner thin border ─────────────────────────────────────────────────────
   const innerPad = 38;
   ctx.strokeStyle = "#e0dff0";
   ctx.lineWidth = 0.75;
   ctx.strokeRect(innerPad, innerPad, W - innerPad * 2, H - innerPad * 2);
 
-  // ── Corner accents (minimal, dark ink) ───────────────────────────────────
+  // ── Corner accents ──────────────────────────────────────────────────────────
   const cornerLen = 18;
   const corners: [number, number][] = [
     [borderPad, borderPad],
@@ -93,7 +92,7 @@ async function drawCertificate(
     ctx.stroke();
   }
 
-  // ── Logo ──────────────────────────────────────────────────────────────────
+  // ── Logo ─────────────────────────────────────────────────────────────────────
   const logo = await loadImage("/assets/jbailogo-5.png");
   const logoH = 40;
   const logoTopY = 72;
@@ -102,7 +101,6 @@ async function drawCertificate(
     const logoW = Math.round(logoH * logoAspect);
     ctx.drawImage(logo, Math.round(W / 2 - logoW / 2), logoTopY, logoW, logoH);
   } else {
-    // Fallback text logo if image fails
     ctx.textAlign = "center";
     ctx.font = "bold 15px monospace";
     ctx.fillStyle = "#7c3aed";
@@ -111,7 +109,7 @@ async function drawCertificate(
     ctx.letterSpacing = "0px";
   }
 
-  // ── Issuer label under logo ───────────────────────────────────────────────
+  // ── Issuer label under logo ─────────────────────────────────────────────────
   ctx.textAlign = "center";
   ctx.font = "11px sans-serif";
   ctx.fillStyle = "#9090a8";
@@ -119,7 +117,7 @@ async function drawCertificate(
   ctx.fillText("JACKBEAR.AI ACADEMY", W / 2, logoTopY + logoH + 22);
   ctx.letterSpacing = "0px";
 
-  // ── Top rule ─────────────────────────────────────────────────────────────
+  // ── Top rule ─────────────────────────────────────────────────────────────────
   const rule1Y = logoTopY + logoH + 38;
   const ruleGrad = ctx.createLinearGradient(140, rule1Y, W - 140, rule1Y);
   ruleGrad.addColorStop(0, "transparent");
@@ -133,13 +131,13 @@ async function drawCertificate(
   ctx.lineTo(W - 140, rule1Y);
   ctx.stroke();
 
-  // ── Certificate of Completion heading ────────────────────────────────────
+  // ── Certificate of Completion heading ─────────────────────────────────────
   ctx.font = "bold 48px Georgia, serif";
   ctx.fillStyle = "#1a1a2e";
   ctx.textAlign = "center";
   ctx.fillText("Certificate of Completion", W / 2, rule1Y + 68);
 
-  // ── Body copy ─────────────────────────────────────────────────────────────
+  // ── Body copy ───────────────────────────────────────────────────────────────
   ctx.font = "italic 16px Georgia, serif";
   ctx.fillStyle = "#5a5a72";
   ctx.fillText(
@@ -148,7 +146,7 @@ async function drawCertificate(
     rule1Y + 106,
   );
 
-  // ── World title ───────────────────────────────────────────────────────────
+  // ── World title ──────────────────────────────────────────────────────────────
   const maxTitleWidth = W - 180;
   ctx.font = "bold 30px Georgia, serif";
   ctx.fillStyle = "#2d1b69";
@@ -178,7 +176,7 @@ async function drawCertificate(
     titleBottomY = rule1Y + 166;
   }
 
-  // ── World subtitle ────────────────────────────────────────────────────────
+  // ── World subtitle ────────────────────────────────────────────────────────────
   if (opts.worldSubtitle) {
     ctx.font = "italic 15px Georgia, serif";
     ctx.fillStyle = "#7c3aed";
@@ -186,7 +184,7 @@ async function drawCertificate(
     titleBottomY = titleBottomY + 32;
   }
 
-  // ── Mid rule ─────────────────────────────────────────────────────────────
+  // ── Mid rule ─────────────────────────────────────────────────────────────────
   const rule2Y = titleBottomY + 52;
   ctx.strokeStyle = ruleGrad;
   ctx.lineWidth = 1;
@@ -195,12 +193,10 @@ async function drawCertificate(
   ctx.lineTo(W - 140, rule2Y);
   ctx.stroke();
 
-  // ── Signature block ───────────────────────────────────────────────────────
-  // Left side: signature
+  // ── Signature block ────────────────────────────────────────────────────────────
   const sigColX = 240;
   const sigBaseY = rule2Y + 52;
 
-  // Signature rule
   ctx.strokeStyle = "#c8c8d8";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -216,7 +212,6 @@ async function drawCertificate(
   ctx.fillStyle = "#9090a8";
   ctx.fillText("Founder, JackBear.ai", sigColX, sigBaseY + 36);
 
-  // Right side: date
   const dateColX = W - 240;
   ctx.strokeStyle = "#c8c8d8";
   ctx.lineWidth = 1;
@@ -233,7 +228,7 @@ async function drawCertificate(
   ctx.fillStyle = "#9090a8";
   ctx.fillText("Date Issued", dateColX, sigBaseY + 36);
 
-  // ── Certificate ID ────────────────────────────────────────────────────────
+  // ── Certificate ID ────────────────────────────────────────────────────────────
   const certIdY = sigBaseY + 72;
   ctx.textAlign = "center";
   ctx.font = "10px monospace";
@@ -242,7 +237,6 @@ async function drawCertificate(
   ctx.fillText(`Certificate ID: ${certId}`, W / 2, certIdY);
   ctx.letterSpacing = "0px";
 
-  // Principal (if available)
   if (opts.principal) {
     const shortPrincipal =
       opts.principal.length > 24
@@ -253,8 +247,8 @@ async function drawCertificate(
     ctx.fillText(`Principal: ${shortPrincipal}`, W / 2, certIdY + 18);
   }
 
-  // ── Bottom rule ───────────────────────────────────────────────────────────
-  const footerRuleY = H - 62;
+  // ── Bottom rule ──────────────────────────────────────────────────────────────
+  const footerRuleY = H - 74;
   ctx.strokeStyle = ruleGrad;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -262,7 +256,7 @@ async function drawCertificate(
   ctx.lineTo(W - 140, footerRuleY);
   ctx.stroke();
 
-  // ── Footer ────────────────────────────────────────────────────────────────
+  // ── Platform footer line ─────────────────────────────────────────────────────
   ctx.textAlign = "center";
   ctx.font = "11px monospace";
   ctx.fillStyle = "#7c3aed";
@@ -270,17 +264,29 @@ async function drawCertificate(
   ctx.fillText(
     "JackBear.ai — Verifiable Intelligence Infrastructure",
     W / 2,
-    H - 38,
+    footerRuleY + 20,
   );
   ctx.letterSpacing = "0px";
+
+  // ── Verification URL (Phase 1 integrity check) ──────────────────────────
+  // Truncate token in URL to keep it legible on the PDF canvas.
+  // The full token is what matters; readers can follow the URL from the PDF.
+  const displayUrl =
+    verifyUrl.length > 90 ? `${verifyUrl.slice(0, 87)}...` : verifyUrl;
+
+  ctx.textAlign = "center";
+  ctx.font = "8.5px monospace";
+  ctx.fillStyle = "#a0a0bc";
+  ctx.fillText(`Verify: ${displayUrl}`, W / 2, footerRuleY + 38);
+  ctx.fillText(
+    "Phase 1 — integrity verification only. Not backend-issued authentication.",
+    W / 2,
+    footerRuleY + 52,
+  );
 }
 
-// ─── Minimal PDF builder ─────────────────────────────────────────────────────
+// ─── Minimal PDF builder ─────────────────────────────────────────────────────────
 
-/**
- * Builds a minimal valid PDF containing a single full-page JPEG image.
- * Does not require any external PDF library.
- */
 function buildPdfBlob(jpegDataUrl: string): Blob {
   const base64Data = jpegDataUrl.split(",")[1];
   const imageBytes = atob(base64Data);
@@ -380,21 +386,30 @@ function buildPdfBlob(jpegDataUrl: string): Blob {
   return new Blob([result], { type: "application/pdf" });
 }
 
-// ─── Public API ──────────────────────────────────────────────────────────────
+// ─── Public API ──────────────────────────────────────────────────────────────────
 
 /**
  * Generates and downloads a certificate PDF for the given world.
+ * Phase 1: embeds an integrity-verification URL derived from payloadHash + issuedNonce.
  */
 export async function downloadCertificate(
   opts: CertificateOptions,
 ): Promise<void> {
-  const certId = generateCertId();
   const dateStr = formatIssuedDate();
+
+  // Build integrity token (async — uses Web Crypto SHA-256)
+  const { certificateId, verifyUrl } = await buildCertToken({
+    worldId:
+      opts.worldId ?? opts.worldTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    worldTitle: opts.worldTitle,
+    worldSubtitle: opts.worldSubtitle ?? "",
+    principal: opts.principal ?? null,
+  });
 
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
   canvas.height = 850;
-  await drawCertificate(canvas, opts, certId, dateStr);
+  await drawCertificate(canvas, opts, certificateId, dateStr, verifyUrl);
 
   const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.95);
   const pdfBlob = buildPdfBlob(jpegDataUrl);

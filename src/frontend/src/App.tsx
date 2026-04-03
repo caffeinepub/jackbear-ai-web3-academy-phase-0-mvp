@@ -47,6 +47,7 @@ import ReferralPage from "./pages/ReferralPage";
 import UpdatesPage from "./pages/UpdatesPage";
 import VaultPage from "./pages/VaultPage";
 import VerifiableIntelligencePage from "./pages/VerifiableIntelligencePage";
+import VerifyPage from "./pages/VerifyPage";
 import Web3ExplainedPage from "./pages/Web3ExplainedPage";
 import World1Page from "./pages/World1Page";
 
@@ -244,6 +245,16 @@ const gamesRoute = createRoute({
   path: "/games",
   component: GamesPage,
 });
+const verifyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/verify",
+  component: VerifyPage,
+});
+const verifyTokenRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/verify/$token",
+  component: VerifyPage,
+});
 const intelligenceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/intelligence",
@@ -282,6 +293,8 @@ const routeTree = rootRoute.addChildren([
   crosswordRoute,
   gamesRoute,
   intelligenceRoute,
+  verifyRoute,
+  verifyTokenRoute,
 ]);
 
 const router = createRouter({ routeTree });
