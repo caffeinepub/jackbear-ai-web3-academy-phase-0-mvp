@@ -265,6 +265,7 @@ export function SovereignShareModal({ onClose }: SovereignShareModalProps) {
 export function useSovereignShareTrigger(isSovereign: boolean): {
   shouldShow: boolean;
   dismiss: () => void;
+  show: () => void;
 } {
   const [shouldShow, setShouldShow] = useState(false);
 
@@ -283,5 +284,9 @@ export function useSovereignShareTrigger(isSovereign: boolean): {
     setShouldShow(false);
   }
 
-  return { shouldShow, dismiss };
+  function show() {
+    setShouldShow(true);
+  }
+
+  return { shouldShow, dismiss, show };
 }

@@ -24,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useActor } from "@/hooks/useActor";
 import { usePublicMetrics } from "@/hooks/usePublicMetrics";
 import { useMyDailyStats } from "@/hooks/useQueries";
+import { useSovereignMode } from "@/hooks/useSovereignMode";
 import { readCoherenceKeys } from "@/lib/coherenceKeys";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,6 +93,7 @@ export default function DashboardPage() {
   const { data: allProgress } = useGetLessonProgress("all");
   const { data: publicMetrics } = usePublicMetrics();
   const { data: dailyStats } = useMyDailyStats();
+  const isSovereign = useSovereignMode();
 
   const [forceShowContent, setForceShowContent] = useState(false);
   const [copiedPrincipal, setCopiedPrincipal] = useState(false);
@@ -303,6 +305,14 @@ export default function DashboardPage() {
               {recoveredKeyCount > 0 && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full whitespace-nowrap">
                   🔑 {recoveredKeyCount}/3
+                </span>
+              )}
+
+              {/* Sovereign chip */}
+              {isSovereign && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-yellow-400/10 text-yellow-500 dark:text-yellow-400 border border-yellow-400/30 px-3 py-1 rounded-full whitespace-nowrap font-mono uppercase tracking-widest">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
+                  Sovereign
                 </span>
               )}
 

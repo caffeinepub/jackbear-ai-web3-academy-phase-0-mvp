@@ -439,7 +439,9 @@ function SystemStatusHeader({
   ];
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm overflow-hidden">
+    <div
+      className={`rounded-xl border bg-card/60 backdrop-blur-sm overflow-hidden transition-colors ${isSovereign ? "border-yellow-400/25" : "border-border/50"}`}
+    >
       {/* Header bar */}
       <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border/40 bg-muted/30">
         <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
@@ -724,6 +726,7 @@ export default function VerifiableIntelligencePage() {
   const {
     shouldShow: showSovereignShareIntel,
     dismiss: dismissSovereignShareIntel,
+    show: showSovereignShareModal,
   } = useSovereignShareTrigger(isSovereign);
   const [moduleExpanded, setModuleExpanded] = useState(false);
   const [module02Expanded, setModule02Expanded] = useState(false);
@@ -962,9 +965,13 @@ export default function VerifiableIntelligencePage() {
             {/* Status badges */}
             <div className="flex flex-wrap items-center gap-2 mb-6">
               {isUnlocked ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isSovereign ? "bg-yellow-400/10 text-yellow-500 dark:text-yellow-400 border border-yellow-400/25" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"}`}
+                >
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Unlocked via Coherence
+                  {isSovereign
+                    ? "Sovereign Mode Active"
+                    : "Unlocked via Coherence"}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20">
@@ -992,9 +999,15 @@ export default function VerifiableIntelligencePage() {
             </p>
 
             <div className="mt-10 flex items-center gap-4">
-              <div className="h-px flex-1 bg-gradient-to-r from-violet-500/40 to-transparent" />
-              <Brain className="h-5 w-5 text-violet-400/60" />
-              <div className="h-px flex-1 bg-gradient-to-l from-cyan-500/40 to-transparent" />
+              <div
+                className={`h-px flex-1 bg-gradient-to-r ${isSovereign ? "from-yellow-400/30 to-transparent" : "from-violet-500/40 to-transparent"}`}
+              />
+              <Brain
+                className={`h-5 w-5 ${isSovereign ? "text-yellow-400/50" : "text-violet-400/60"}`}
+              />
+              <div
+                className={`h-px flex-1 bg-gradient-to-l ${isSovereign ? "from-yellow-400/30 to-transparent" : "from-cyan-500/40 to-transparent"}`}
+              />
             </div>
           </div>
         </section>
@@ -1068,7 +1081,9 @@ export default function VerifiableIntelligencePage() {
                     >
                       {/* Top accent line — only for available */}
                       {isAvailable && (
-                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
+                        <div
+                          className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent to-transparent ${isSovereign && isModuleDone ? "via-yellow-400/70" : "via-violet-500/60"}`}
+                        />
                       )}
 
                       <div className="p-6 md:p-8">
@@ -1717,11 +1732,9 @@ export default function VerifiableIntelligencePage() {
                 <div className="mt-8 flex justify-center">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all sovereign-share-achievement-btn"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border border-yellow-400/40 bg-yellow-400/8 text-yellow-500 dark:text-yellow-400 hover:bg-yellow-400/15 hover:border-yellow-400/60"
                     onClick={() => {
-                      // Re-trigger the share modal by clearing the seen flag
-                      localStorage.removeItem("jb_sovereign_share_seen");
-                      dismissSovereignShareIntel();
+                      showSovereignShareModal();
                     }}
                   >
                     <ShareIcon className="h-3.5 w-3.5" />

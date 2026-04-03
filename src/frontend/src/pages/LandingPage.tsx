@@ -14,8 +14,10 @@ import {
   ArrowRight,
   Award,
   BookOpen,
+  Brain,
   Globe,
   GraduationCap,
+  LayoutGrid,
   Medal,
   Puzzle,
   Shield,
@@ -203,6 +205,17 @@ export default function LandingPage() {
     ? "oklch(0.60 0.1 230)"
     : "oklch(0.35 0.08 230)";
 
+  // Quick play zone colors
+  const quickPlayLabelBg = isDark
+    ? "oklch(0.18 0.08 290 / 0.6)"
+    : "oklch(0.90 0.04 290 / 0.8)";
+  const quickPlayLabelColor = isDark
+    ? "oklch(0.72 0.18 290)"
+    : "oklch(0.35 0.16 290)";
+  const quickPlayLabelBorder = isDark
+    ? "1px solid oklch(0.40 0.14 290 / 0.4)"
+    : "1px solid oklch(0.65 0.12 290 / 0.4)";
+
   useEffect(() => {
     const hash = window.location.hash;
     if (hash && !hash.includes("caffeineAdminToken") && !hash.includes("=")) {
@@ -349,18 +362,140 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* 3 Primary Action Buttons */}
+          {/* ── QUICK ACCESS ZONE ─────────────────────────────────── */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeUp}
             custom={0.22}
           >
+            {/* PLAY NOW label chip */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 14,
+              }}
+            >
+              <span
+                data-ocid="hero.quickplay.label"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: quickPlayLabelBg,
+                  color: quickPlayLabelColor,
+                  border: quickPlayLabelBorder,
+                  borderRadius: 999,
+                  padding: "4px 14px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                }}
+              >
+                <Zap style={{ width: 11, height: 11 }} />
+                Quick Access
+              </span>
+            </div>
+
+            {/* Zone 1 — Primary game buttons */}
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
                 gap: 14,
+                justifyContent: "center",
+                marginBottom: 14,
+              }}
+            >
+              {/* Play Daily Crossword */}
+              <Button
+                size="lg"
+                onClick={() => void navigate({ to: "/crossword" })}
+                data-ocid="hero.crossword.primary_button"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.52 0.20 200) 0%, oklch(0.46 0.18 210) 100%)",
+                  color: "oklch(0.98 0.01 200)",
+                  fontWeight: 700,
+                  fontSize: "1.025rem",
+                  padding: "16px 30px",
+                  height: "auto",
+                  borderRadius: 12,
+                  boxShadow: "0 0 28px oklch(0.52 0.20 200 / 0.40)",
+                  border: "none",
+                  letterSpacing: "0.01em",
+                  flex: "1 1 220px",
+                  maxWidth: 320,
+                  justifyContent: "center",
+                }}
+              >
+                <LayoutGrid
+                  style={{
+                    marginRight: 9,
+                    width: 19,
+                    height: 19,
+                    flexShrink: 0,
+                  }}
+                />
+                Play Daily Crossword
+              </Button>
+
+              {/* Play ICP Decode */}
+              <Button
+                size="lg"
+                onClick={() => void navigate({ to: "/hangman" })}
+                data-ocid="hero.decode.primary_button"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.52 0.20 60) 0%, oklch(0.47 0.22 45) 100%)",
+                  color: "oklch(0.98 0.01 80)",
+                  fontWeight: 700,
+                  fontSize: "1.025rem",
+                  padding: "16px 30px",
+                  height: "auto",
+                  borderRadius: 12,
+                  boxShadow: "0 0 28px oklch(0.52 0.20 60 / 0.40)",
+                  border: "none",
+                  letterSpacing: "0.01em",
+                  flex: "1 1 220px",
+                  maxWidth: 320,
+                  justifyContent: "center",
+                }}
+              >
+                <Puzzle
+                  style={{
+                    marginRight: 9,
+                    width: 19,
+                    height: 19,
+                    flexShrink: 0,
+                  }}
+                />
+                Play ICP Decode
+              </Button>
+            </div>
+
+            {/* Visual separator */}
+            <div
+              aria-hidden
+              style={{
+                height: 1,
+                background: isDark
+                  ? "oklch(0.28 0.08 290 / 0.5)"
+                  : "oklch(0.82 0.04 290 / 0.6)",
+                maxWidth: 480,
+                margin: "0 auto 14px",
+                borderRadius: 999,
+              }}
+            />
+
+            {/* Zone 2 — Secondary actions */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 12,
                 justifyContent: "center",
               }}
             >
@@ -373,59 +508,37 @@ export default function LandingPage() {
                     "linear-gradient(135deg, oklch(0.55 0.28 290) 0%, oklch(0.50 0.26 300) 100%)",
                   color: "oklch(0.98 0.01 290)",
                   fontWeight: 700,
-                  fontSize: "1rem",
-                  padding: "14px 28px",
+                  fontSize: "0.95rem",
+                  padding: "12px 24px",
                   height: "auto",
                   borderRadius: 10,
-                  boxShadow: "0 0 24px oklch(0.55 0.28 290 / 0.35)",
+                  boxShadow: "0 0 20px oklch(0.55 0.28 290 / 0.30)",
                   border: "none",
                   letterSpacing: "0.02em",
                 }}
               >
-                <BookOpen style={{ marginRight: 8, width: 18, height: 18 }} />
-                Continue Learning
+                <BookOpen style={{ marginRight: 7, width: 16, height: 16 }} />
+                Start Learning
               </Button>
 
               <Button
                 size="lg"
-                onClick={() => void navigate({ to: "/hangman" })}
-                data-ocid="hero.play_decode.primary_button"
-                style={{
-                  background:
-                    "linear-gradient(135deg, oklch(0.52 0.2 60) 0%, oklch(0.48 0.22 45) 100%)",
-                  color: "oklch(0.98 0.01 80)",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  padding: "14px 28px",
-                  height: "auto",
-                  borderRadius: 10,
-                  boxShadow: "0 0 24px oklch(0.52 0.2 60 / 0.35)",
-                  border: "none",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                <Puzzle style={{ marginRight: 8, width: 18, height: 18 }} />
-                Play Decode
-              </Button>
-
-              <Button
-                size="lg"
-                onClick={() => void navigate({ to: "/leaderboard" })}
-                data-ocid="hero.leaderboard.primary_button"
+                onClick={() => void navigate({ to: "/intelligence" })}
+                data-ocid="hero.intelligence.secondary_button"
                 style={{
                   background: ghostBtnBg,
                   color: ghostBtnColor,
                   fontWeight: 700,
-                  fontSize: "1rem",
-                  padding: "14px 28px",
+                  fontSize: "0.95rem",
+                  padding: "12px 24px",
                   height: "auto",
                   borderRadius: 10,
                   border: ghostBtnBorder,
                   letterSpacing: "0.02em",
                 }}
               >
-                <Trophy style={{ marginRight: 8, width: 18, height: 18 }} />
-                View Leaderboard
+                <Brain style={{ marginRight: 7, width: 16, height: 16 }} />
+                Enter Intelligence
               </Button>
             </div>
           </motion.div>
