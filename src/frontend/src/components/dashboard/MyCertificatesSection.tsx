@@ -6,11 +6,10 @@
  * Actions: Download PDF, Reprint PDF, Copy Verification Link, Open Verification Page,
  *          Share on X, Share on LinkedIn.
  *
- * Reuses:
- *   - downloadCertificate() from lib/generateCertificate
- *   - WORLDS / WorldDef from CoursesPage
- *   - isLessonUnlockedInWorld from lib/worldProgress
- *   - CertificateShareSection for X / LinkedIn / Facebook / Email / Copy
+ * LOADING RESILIENCE: Shows a skeleton/placeholder card while progress is still
+ * loading so the section does not disappear prematurely. Only hides once it is
+ * confidently known (data loaded, earnedWorlds.length === 0) that there are no
+ * earned certificates.
  *
  * No backend dependency. No changes to completion logic.
  */
@@ -19,6 +18,7 @@ import type { LessonProgress } from "@/backend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Award,
@@ -41,21 +41,26 @@ interface CertEntry {
   world: WorldDef;
   verifyUrl: string | null;
   certificateId: string | null;
-  issuedLabel: string | null; // "Downloaded [date]" or null
+  issuedLabel: string | null;
 }
 
 interface MyCertificatesSectionProps {
   allProgress: LessonProgress[];
   /** ICP principal text — passed to PDF generator for optional display */
   principal?: string | null;
+  /**
+   * True while the backend lesson-progress query is still in flight.
+   * When true, the section shows a loading skeleton instead of collapsing
+   * to null — prevents the card from disappearing prematurely.
+   */
+  isProgressLoading?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
  * A world qualifies for "My Credentials" when all its lessons are completed.
- * Boss Quiz completion is NOT required — its progress entry may be absent,
- * named differently, or not yet loaded without affecting certificate eligibility.
+ * Boss Quiz completion is NOT required.
  */
 function isWorldFullyComplete(
   world: WorldDef,
@@ -73,6 +78,39 @@ function buildXShareText(worldTitle: string, url: string): string {
 function buildLinkedInShareUrl(worldTitle: string, url: string): string {
   const summary = `Just completed ${worldTitle} on JackBear.ai. Not just Web3 — verifiable intelligence infrastructure. ${url}`;
   return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(summary)}`;
+}
+
+// ─── Loading skeleton card ────────────────────────────────────────────────────
+
+function CertificateLoadingSkeleton() {
+  return (
+    <Card className="border-primary/20" data-ocid="my_certificates.loading">
+      <CardHeader className="pb-3 pt-5 px-5">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Award className="h-4 w-4 text-primary" />
+          My Credentials
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">Checking credentials...</p>
+      </CardHeader>
+      <CardContent className="px-5 pb-5 space-y-3">
+        <div className="rounded-xl border border-border bg-card/60 p-4 space-y-2">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-3.5 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-7 w-24 rounded-md" />
+            <Skeleton className="h-7 w-20 rounded-md" />
+            <Skeleton className="h-7 w-16 rounded-md" />
+          </div>
+        </div>
+        <Skeleton className="h-3 w-3/4" />
+      </CardContent>
+    </Card>
+  );
 }
 
 // ─── Per-certificate row ─────────────────────────────────────────────────────
@@ -119,7 +157,6 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
 
   function handleOpenVerify() {
     if (!verifyUrl) return;
-    // Navigate within the app so router handles it cleanly
     const tokenMatch = verifyUrl.match(/\/verify\/(.+)$/);
     if (tokenMatch) {
       navigate({ to: `/verify/${tokenMatch[1]}` });
@@ -187,7 +224,6 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
 
       {/* Primary actions */}
       <div className="flex gap-2 flex-wrap">
-        {/* Download PDF — always first; if not yet generated, generates + downloads */}
         <Button
           size="sm"
           variant="default"
@@ -208,7 +244,6 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
               : "Download PDF"}
         </Button>
 
-        {/* Copy verification link */}
         <Button
           size="sm"
           variant="outline"
@@ -224,7 +259,6 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
           {copied ? "Copied!" : "Copy Link"}
         </Button>
 
-        {/* Open verification page — only enabled once verifyUrl exists */}
         <Button
           size="sm"
           variant="outline"
@@ -242,7 +276,6 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
           Verify
         </Button>
 
-        {/* Share toggle */}
         <Button
           size="sm"
           variant="outline"
@@ -257,7 +290,6 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
         </Button>
       </div>
 
-      {/* Expanded share row */}
       {shareExpanded && (
         <div className="flex gap-2 flex-wrap pl-0.5">
           <Button
@@ -288,9 +320,8 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
 export default function MyCertificatesSection({
   allProgress,
   principal,
+  isProgressLoading = false,
 }: MyCertificatesSectionProps) {
-  // Map worldId → { verifyUrl, certificateId, issuedLabel } for certs
-  // already generated this session.
   const [sessionCerts, setSessionCerts] = useState<
     Record<
       string,
@@ -303,8 +334,18 @@ export default function MyCertificatesSection({
     isWorldFullyComplete(w, allProgress),
   );
 
-  // If no world is fully complete yet, render nothing — keeps dashboard clean
-  if (earnedWorlds.length === 0) return null;
+  // LOADING RESILIENCE:
+  // - While progress is still loading (isProgressLoading=true) AND we have no
+  //   confirmed earned worlds yet, show a skeleton placeholder instead of null.
+  //   This prevents the card from blinking out during slow backend responses.
+  // - Once loading is complete and earnedWorlds is still empty, hide the section.
+  if (earnedWorlds.length === 0) {
+    if (isProgressLoading) {
+      return <CertificateLoadingSkeleton />;
+    }
+    // Loading done, no earned worlds — confidently hide
+    return null;
+  }
 
   const now = new Date().toLocaleDateString("en-US", {
     year: "numeric",

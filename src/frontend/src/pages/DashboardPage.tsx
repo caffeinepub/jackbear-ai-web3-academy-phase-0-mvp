@@ -20,7 +20,7 @@ import WhatsNewDashboardWidget from "@/components/dashboard/WhatsNewDashboardWid
 import WorldStreaksDashboardWidget from "@/components/dashboard/WorldStreaksDashboardWidget";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useActor } from "@/hooks/useActor";
 import { usePublicMetrics } from "@/hooks/usePublicMetrics";
 import { useMyDailyStats } from "@/hooks/useQueries";
@@ -31,6 +31,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
+  Award,
   BookOpen,
   ChevronRight,
   Copy,
@@ -76,6 +77,26 @@ function MetricCard({
   );
 }
 
+// ─── Reusable section card wrapper ────────────────────────────────────────────
+function AppCard({
+  children,
+  className = "",
+  id,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  return (
+    <Card
+      id={id}
+      className={`border-border/60 bg-card/70 overflow-hidden ${className}`}
+    >
+      {children}
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -90,7 +111,11 @@ export default function DashboardPage() {
   } = useGetCallerUserProfile();
   const { data: bearCredits, refetch: refetchBearCredits } =
     useGetBearCredits();
-  const { data: allProgress } = useGetLessonProgress("all");
+  const {
+    data: allProgress,
+    isLoading: progressLoading,
+    isFetched: progressFetched,
+  } = useGetLessonProgress("all");
   const { data: publicMetrics } = usePublicMetrics();
   const { data: dailyStats } = useMyDailyStats();
   const isSovereign = useSovereignMode();
@@ -104,7 +129,6 @@ export default function DashboardPage() {
   // Suppress unused variable warnings
   void profileFetching;
 
-  // Increment login count for easter egg hints (once per session)
   useEffect(() => {
     if (isAuthenticated) {
       const sessionKey = "jb_session_counted";
@@ -115,8 +139,6 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated]);
 
-  // Force show content after 3 seconds — fires on isAuthenticated alone,
-  // so a slow/missing actor never keeps the dashboard stuck forever.
   useEffect(() => {
     if (isAuthenticated) {
       const timeout = setTimeout(() => {
@@ -126,7 +148,6 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated]);
 
-  // Refetch dashboard BP/stats and lesson progress after a confirmed backend BP write.
   useEffect(() => {
     const handler = () => {
       refetchBearCredits();
@@ -185,10 +206,8 @@ export default function DashboardPage() {
     );
   }
 
-  // Non-fatal: profile error shows inline banner, dashboard still renders
   const showProfileError = profileError && isFetched;
 
-  // Block on initial load only — forceShowContent overrides actor gate after 3s
   const isInitialLoading =
     (profileLoading && !isFetched && !forceShowContent) ||
     (!actor && !forceShowContent);
@@ -220,7 +239,6 @@ export default function DashboardPage() {
   const completedLessons = allProgress?.filter((p) => p.completed).length || 0;
   const totalXP = Number(userProfile?.xp ?? 0);
 
-  // --- BP-Tier Progress Bar ---
   function getNextBPTier(bp: number): number {
     const tiers = [
       100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
@@ -240,7 +258,6 @@ export default function DashboardPage() {
     ? Number(publicMetrics.averageProgress)
     : 0;
 
-  // Fire 7-day streak easter egg once per session when streak >= 7
   if (currentStreak >= 7) {
     const streakKey = "jb_streak7_fired";
     if (!sessionStorage.getItem(streakKey)) {
@@ -249,12 +266,17 @@ export default function DashboardPage() {
     }
   }
 
-  // Coherence key state — read once at render
   const coherenceState = readCoherenceKeys();
   const recoveredKeyCount = coherenceState.recovered.length;
 
   const displayName = userProfile?.displayName || "Learner";
   const principalText = identity?.getPrincipal().toString() ?? "";
+
+  // Certificate loading resilience: progress is "loading" until the query
+  // has both started AND finished at least once with actor available.
+  // progressLoading=true means in-flight; !progressFetched means never resolved yet.
+  const isCertProgressLoading =
+    progressLoading || (!progressFetched && !!actor);
 
   return (
     <div className="min-h-screen bg-background">
@@ -272,8 +294,9 @@ export default function DashboardPage() {
           </AlertDescription>
         </Alert>
       )}
+
       {/* ═══════════════════════════════════════════════════
-          PART 1 — TOP HUD BAR
+          TOP HUD BAR
       ═══════════════════════════════════════════════════ */}
       <div
         className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-sm"
@@ -281,42 +304,30 @@ export default function DashboardPage() {
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 gap-3 overflow-x-auto">
-            {/* Player name */}
             <span className="font-display text-sm font-bold text-foreground whitespace-nowrap flex-shrink-0">
               {displayName}
             </span>
-
-            {/* Stat chips */}
             <div className="flex items-center gap-2 flex-1 justify-end flex-wrap">
-              {/* BP chip */}
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full whitespace-nowrap">
                 <Zap className="h-3 w-3" />
                 {credits.toLocaleString()} BP
               </span>
-
-              {/* Streak chip */}
               {currentStreak > 0 && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-full whitespace-nowrap">
                   🔥 {currentStreak}d
                 </span>
               )}
-
-              {/* Coherence key chip */}
               {recoveredKeyCount > 0 && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full whitespace-nowrap">
                   🔑 {recoveredKeyCount}/3
                 </span>
               )}
-
-              {/* Sovereign chip */}
               {isSovereign && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-yellow-400/10 text-yellow-500 dark:text-yellow-400 border border-yellow-400/30 px-3 py-1 rounded-full whitespace-nowrap font-mono uppercase tracking-widest">
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
                   Sovereign
                 </span>
               )}
-
-              {/* Rank link */}
               <button
                 type="button"
                 onClick={() => navigate({ to: "/leaderboard" })}
@@ -332,125 +343,159 @@ export default function DashboardPage() {
       </div>
 
       {/* Main content */}
-      <div className="container mx-auto px-4 py-10 space-y-12">
+      <div className="container mx-auto px-4 py-8 space-y-6">
         {/* ── DEV DEBUG — TEMP PRINCIPAL DISPLAY ─────────────────── */}
         {principalText && (
-          <div className="rounded-xl border-2 border-amber-500/60 bg-amber-500/10 p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-              <Terminal className="h-4 w-4 shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-widest">
-                Dev Principal
-              </span>
-              <span className="ml-auto text-[10px] font-medium opacity-60">
-                Testing Unlock Active — remove after use
-              </span>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <code className="flex-1 text-xs font-mono break-all bg-black/10 dark:bg-white/5 rounded px-3 py-2 text-foreground select-all">
-                {principalText}
-              </code>
-              <button
-                type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(principalText);
-                  setCopiedPrincipal(true);
-                  setTimeout(() => setCopiedPrincipal(false), 2000);
-                }}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/40 transition-colors whitespace-nowrap"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {copiedPrincipal ? "Copied!" : "Copy"}
-              </button>
-            </div>
-          </div>
+          <AppCard>
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
+                <Terminal className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-bold uppercase tracking-widest">
+                  Dev Principal
+                </span>
+                <span className="ml-auto text-[10px] font-medium opacity-60">
+                  Testing Unlock Active — remove after use
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <code className="flex-1 text-xs font-mono break-all bg-black/10 dark:bg-white/5 rounded px-3 py-2 text-foreground select-all">
+                  {principalText}
+                </code>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(principalText);
+                    setCopiedPrincipal(true);
+                    setTimeout(() => setCopiedPrincipal(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/40 transition-colors whitespace-nowrap"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {copiedPrincipal ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            </CardContent>
+          </AppCard>
         )}
         {/* ── END DEV DEBUG ────────────────────────────────────────── */}
 
-        {/* Username editor — small, unobtrusive, just below HUD */}
+        {/* Username editor */}
         {actor && userProfile && (
-          <div className="-mt-4">
-            <UsernameEditor
-              actor={actor}
-              currentName={userProfile.displayName ?? ""}
-              onNameChanged={() =>
-                queryClient.invalidateQueries({
-                  queryKey: ["currentUserProfile"],
-                })
-              }
-            />
-          </div>
+          <UsernameEditor
+            actor={actor}
+            currentName={userProfile.displayName ?? ""}
+            onNameChanged={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["currentUserProfile"],
+              })
+            }
+          />
         )}
 
         {/* ═══════════════════════════════════════════════════
-            PART 2 — PRIMARY ACTION ZONE
+            TOP ACTIONS — primary interaction zone
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Primary Actions">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-6">
-            Actions
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {/* Continue Learning */}
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/courses" })}
-              className="group relative flex flex-col items-center justify-center gap-2 h-28 sm:h-32 sm:min-w-[220px] flex-1 sm:flex-none rounded-2xl border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary shadow-glow-sm hover:shadow-glow-md transition-all duration-200 cursor-pointer px-8"
-              data-ocid="hud.continue_learning.button"
-            >
-              <div className="p-3 rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-colors">
-                <BookOpen className="h-7 w-7 text-primary" />
-              </div>
-              <span className="font-display text-sm font-bold text-foreground tracking-wide">
-                Continue Learning
-              </span>
-              <span className="text-xs text-muted-foreground">Earn BP</span>
-            </button>
+        <AppCard className="border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Actions
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5 space-y-4">
+            {/* Tier 1 — big 3 game/learn buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/courses" })}
+                className="group relative flex flex-col items-center justify-center gap-2 h-28 sm:h-32 sm:min-w-[200px] flex-1 sm:flex-none rounded-2xl border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary shadow-glow-sm hover:shadow-glow-md transition-all duration-200 cursor-pointer px-6"
+                data-ocid="hud.continue_learning.button"
+              >
+                <div className="p-3 rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                  <BookOpen className="h-7 w-7 text-primary" />
+                </div>
+                <span className="font-display text-sm font-bold text-foreground tracking-wide">
+                  Continue Learning
+                </span>
+                <span className="text-xs text-muted-foreground">Earn BP</span>
+              </button>
 
-            {/* Play Decode */}
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/hangman" })}
-              className="group relative flex flex-col items-center justify-center gap-2 h-28 sm:h-32 sm:min-w-[220px] flex-1 sm:flex-none rounded-2xl border-2 border-accent/50 bg-accent/10 hover:bg-accent/20 hover:border-accent shadow-[0_0_20px_-4px_hsl(var(--accent)/0.4)] hover:shadow-[0_0_32px_-4px_hsl(var(--accent)/0.6)] transition-all duration-200 cursor-pointer px-8"
-              data-ocid="hud.play_decode.button"
-            >
-              <div className="p-3 rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-colors">
-                <Gamepad2 className="h-7 w-7 text-accent" />
-              </div>
-              <span className="font-display text-sm font-bold text-foreground tracking-wide">
-                Play Decode
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Recover Keys
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/hangman" })}
+                className="group relative flex flex-col items-center justify-center gap-2 h-28 sm:h-32 sm:min-w-[200px] flex-1 sm:flex-none rounded-2xl border-2 border-accent/50 bg-accent/10 hover:bg-accent/20 hover:border-accent shadow-[0_0_20px_-4px_hsl(var(--accent)/0.4)] hover:shadow-[0_0_32px_-4px_hsl(var(--accent)/0.6)] transition-all duration-200 cursor-pointer px-6"
+                data-ocid="hud.play_decode.button"
+              >
+                <div className="p-3 rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-colors">
+                  <Gamepad2 className="h-7 w-7 text-accent" />
+                </div>
+                <span className="font-display text-sm font-bold text-foreground tracking-wide">
+                  Play Decode
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Recover Keys
+                </span>
+              </button>
 
-            {/* Play Crossword */}
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/crossword" })}
-              className="group relative flex flex-col items-center justify-center gap-2 h-28 sm:h-32 sm:min-w-[220px] flex-1 sm:flex-none rounded-2xl border-2 border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500 shadow-[0_0_20px_-4px_rgba(16,185,129,0.3)] hover:shadow-[0_0_32px_-4px_rgba(16,185,129,0.5)] transition-all duration-200 cursor-pointer px-8"
-              data-ocid="hud.play_crossword.button"
-            >
-              <div className="p-3 rounded-xl bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
-                <Grid3X3 className="h-7 w-7 text-emerald-500" />
-              </div>
-              <span className="font-display text-sm font-bold text-foreground tracking-wide">
-                Play Crossword
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Daily glossary puzzle
-              </span>
-            </button>
-          </div>
-        </section>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/crossword" })}
+                className="group relative flex flex-col items-center justify-center gap-2 h-28 sm:h-32 sm:min-w-[200px] flex-1 sm:flex-none rounded-2xl border-2 border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-500 shadow-[0_0_20px_-4px_rgba(16,185,129,0.3)] hover:shadow-[0_0_32px_-4px_rgba(16,185,129,0.5)] transition-all duration-200 cursor-pointer px-6"
+                data-ocid="hud.play_crossword.button"
+              >
+                <div className="p-3 rounded-xl bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                  <Grid3X3 className="h-7 w-7 text-emerald-500" />
+                </div>
+                <span className="font-display text-sm font-bold text-foreground tracking-wide">
+                  Play Crossword
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Daily puzzle
+                </span>
+              </button>
+            </div>
+
+            {/* Tier 2 — secondary quick-jump CTAs */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/intelligence" })}
+                className="group inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl border border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 hover:border-violet-500/70 text-violet-600 dark:text-violet-400 font-semibold text-sm transition-all duration-200 cursor-pointer flex-1"
+                data-ocid="hud.enter_intelligence.button"
+              >
+                <Terminal className="h-4 w-4 shrink-0" />
+                Enter Intelligence
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("my-credentials")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="group inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-500/70 text-amber-600 dark:text-amber-400 font-semibold text-sm transition-all duration-200 cursor-pointer flex-1"
+                data-ocid="hud.my_credentials.button"
+              >
+                <Award className="h-4 w-4 shrink-0" />
+                My Credentials
+              </button>
+            </div>
+
+            {/* Tier 3 — NextActionCard for immediate lesson context */}
+            <NextActionCard />
+          </CardContent>
+        </AppCard>
 
         {/* ═══════════════════════════════════════════════════
-            PART 3 — PROGRESSION STRIP
+            PROGRESSION
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Progression" data-ocid="hud.progression.panel">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
-            Progression
-          </p>
-          <div className="space-y-3">
+        <AppCard data-ocid="hud.progression.panel">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Progression
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5 space-y-3">
             <AnimatedXPBar currentXP={bpForBar} maxXP={nextTierThreshold} />
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
@@ -464,8 +509,6 @@ export default function DashboardPage() {
                 {nextTierThreshold.toLocaleString()}
               </span>
             </div>
-
-            {/* Daily boost badges — inline in progression strip */}
             {dailyStats &&
               (dailyStats.firstLessonBonusAvailable ||
                 Number(dailyStats.streak) >= 4) && (
@@ -483,11 +526,16 @@ export default function DashboardPage() {
                   )}
                 </div>
               )}
-          </div>
-        </section>
+          </CardContent>
+        </AppCard>
 
-        {/* Metrics row — compact, below progression */}
+        {/* ═══════════════════════════════════════════════════
+            STATS
+        ═══════════════════════════════════════════════════ */}
         <section aria-label="Stats">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-3 border-l-2 border-primary/30 pl-3">
+            Stats
+          </p>
           <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-3">
             <MetricCard
               Icon={Zap}
@@ -527,54 +575,63 @@ export default function DashboardPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════
-            PART 4 — COMPETITION (leaderboard)
+            COMPETITION
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Competition" data-ocid="hud.competition.panel">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
-            Competition
-          </p>
-          <button
-            type="button"
-            data-ocid="leaderboard.all_time.button"
-            onClick={() => navigate({ to: "/leaderboard" })}
-            className="w-full flex items-center gap-4 px-5 py-4 mb-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10 transition-colors text-left group"
-          >
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-yellow-500/15 shrink-0">
-              <Trophy className="h-5 w-5 text-yellow-500" />
+        <AppCard data-ocid="hud.competition.panel">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Competition
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5 space-y-3">
+            <button
+              type="button"
+              data-ocid="leaderboard.all_time.button"
+              onClick={() => navigate({ to: "/leaderboard" })}
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10 transition-colors text-left group"
+            >
+              <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-yellow-500/15 shrink-0">
+                <Trophy className="h-4 w-4 text-yellow-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">
+                  All-Time Leaderboard
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  See who leads the global rankings
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0" />
+            </button>
+            <div className="rounded-xl border border-primary/20 bg-card/50 overflow-hidden">
+              <SafeWidget>
+                <LeaderboardDashboardWidget />
+              </SafeWidget>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground">
-                All-Time Leaderboard
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                See who leads the global rankings
-              </p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0" />
-          </button>
-          <div className="rounded-2xl border border-primary/20 bg-card/50 overflow-hidden">
-            <SafeWidget>
-              <LeaderboardDashboardWidget />
-            </SafeWidget>
-          </div>
-        </section>
+          </CardContent>
+        </AppCard>
 
         {/* ═══════════════════════════════════════════════════
-            PROGRESS ZONE — streaks, completions, certificate
+            PROGRESS — streaks, completions, credentials
         ═══════════════════════════════════════════════════ */}
         <section aria-label="Progress">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-3 border-l-2 border-primary/30 pl-3">
             Progress
           </p>
-          <div className="space-y-6">
+          <div className="space-y-4">
             <WorldStreaksDashboardWidget allProgress={allProgress} />
 
             {recentCompletedLessons.length > 0 && (
-              <DashboardSection
-                title="Recent Completions"
-                description="Your latest completed lessons"
-              >
-                <div className="space-y-3">
+              <AppCard>
+                <CardHeader className="pb-2 pt-5 px-5">
+                  <CardTitle className="text-sm font-semibold">
+                    Recent Completions
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Your latest completed lessons
+                  </p>
+                </CardHeader>
+                <CardContent className="px-5 pb-5 space-y-3">
                   {recentCompletedLessons.map((lesson) => (
                     <CompletedLearningItemCard
                       key={lesson.lessonId}
@@ -582,102 +639,116 @@ export default function DashboardPage() {
                       completionTime={lesson.completionTime}
                     />
                   ))}
-                </div>
-              </DashboardSection>
+                </CardContent>
+              </AppCard>
             )}
 
             <ProgressCertificateSection
               completedLessons={completedLessons}
               userDisplayName={userProfile?.displayName}
             />
-            <MyCertificatesSection
-              allProgress={allProgress ?? []}
-              principal={identity?.getPrincipal().toText()}
-            />
+
+            {/* My Credentials — with loading resilience */}
+            <div id="my-credentials">
+              <MyCertificatesSection
+                allProgress={allProgress ?? []}
+                principal={identity?.getPrincipal().toText()}
+                isProgressLoading={isCertProgressLoading}
+              />
+            </div>
           </div>
         </section>
 
         {/* ═══════════════════════════════════════════════════
-            PART 5 — EARN + REFERRAL (grouped, lower priority)
+            EARN & REFER
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Earn and Refer" data-ocid="hud.earn_refer.panel">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
-            Earn &amp; Refer
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <HowToEarnBPWidget />
-
-            {/* Referral card */}
-            <Card
-              className="border-primary/20 bg-primary/5"
-              data-ocid="referral.card"
-            >
-              <CardContent className="pt-5 pb-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-primary/15">
-                      <i className="fa-solid fa-user-plus text-primary" />
+        <AppCard data-ocid="hud.earn_refer.panel">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Earn &amp; Refer
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <HowToEarnBPWidget />
+              {/* Referral card */}
+              <Card
+                className="border-primary/20 bg-primary/5"
+                data-ocid="referral.card"
+              >
+                <CardContent className="pt-5 pb-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-primary/15">
+                        <i className="fa-solid fa-user-plus text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">
+                          Invite friends to JackBear.ai
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Referral rewards coming soon
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">
-                        Invite friends to JackBear.ai
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Referral rewards coming soon
-                      </p>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-primary/30 text-primary hover:bg-primary/10 flex-shrink-0"
+                      onClick={() => navigate({ to: "/referral" })}
+                      data-ocid="referral.primary_button"
+                    >
+                      Get Your Link
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-primary/30 text-primary hover:bg-primary/10 flex-shrink-0"
-                    onClick={() => navigate({ to: "/referral" })}
-                    data-ocid="referral.primary_button"
-                  >
-                    Get Your Link
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </AppCard>
 
         {/* ═══════════════════════════════════════════════════
             DISCOVERIES
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Discoveries" data-ocid="hud.discoveries.panel">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
-            Discoveries
-          </p>
-          <EasterEggGridSection />
-        </section>
+        <AppCard data-ocid="hud.discoveries.panel">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Discoveries
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            <EasterEggGridSection />
+          </CardContent>
+        </AppCard>
 
         {/* ═══════════════════════════════════════════════════
-            PART 6 — DE-EMPHASIZED SECONDARY CONTENT
-            (news, today on ICP, ledger — pushed to bottom)
+            TODAY & NEWS
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Today &amp; News">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
-            Today
-          </p>
-          <div className="space-y-6">
+        <AppCard>
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Today
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5 space-y-4">
             <TermOfTheDayWidget />
-            <NextActionCard />
             <SafeWidget>
               <TodayOnICPWidget />
             </SafeWidget>
             <NewsDashboardWidget />
-          </div>
-        </section>
+          </CardContent>
+        </AppCard>
 
         {/* ═══════════════════════════════════════════════════
             UTILITY & SUPPORT
         ═══════════════════════════════════════════════════ */}
-        <section aria-label="Utility">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-4">
-            Utility &amp; Support
-          </p>
-          <div className="space-y-4">
+        <AppCard>
+          <CardHeader className="pb-2 pt-5 px-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Utility &amp; Support
+            </p>
+          </CardHeader>
+          <CardContent className="px-5 pb-5 space-y-4">
             <PushNotificationsBanner />
 
             {/* Monthly Prize */}
@@ -715,12 +786,17 @@ export default function DashboardPage() {
 
             <BPLedgerWidget />
             <WhatsNewDashboardWidget />
-          </div>
-        </section>
+          </CardContent>
+        </AppCard>
 
-        <div className="mt-4">
-          <TipTheDev />
-        </div>
+        {/* ═══════════════════════════════════════════════════
+            TIP THE DEV
+        ═══════════════════════════════════════════════════ */}
+        <AppCard>
+          <CardContent className="pt-5 pb-5 px-5">
+            <TipTheDev />
+          </CardContent>
+        </AppCard>
       </div>
     </div>
   );
