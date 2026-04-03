@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  Award,
   BookOpen,
   CheckCircle,
   Coins,
@@ -46,6 +47,7 @@ import {
   getDailyBPLessons,
   recordDailyBPLesson,
 } from "../lib/dailyLessonPacing";
+import { downloadCertificate } from "../lib/generateCertificate";
 import { allLessonsEN } from "../lib/lessonContent";
 import { isBossAvailable, isLessonUnlockedInWorld } from "../lib/worldProgress";
 
@@ -588,6 +590,7 @@ export default function CoursesPage() {
               (p) => p.lessonId === `boss-${world.id}` && p.attempted,
             );
             const isBonus = world.id === "world-7";
+            const isWorldFullyComplete = allLessonsAttempted && bossAttempted;
             const isCoherence = world.id === "world-8";
 
             const worldLessonIds = new Set(
@@ -864,6 +867,32 @@ export default function CoursesPage() {
                           <Zap className="w-4 h-4 text-amber-500 ml-auto" />
                         )}
                       </button>
+                      {/* Download Certificate */}
+                      {isWorldFullyComplete && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadCertificate({
+                              worldTitle: world.title,
+                              principal: identity
+                                ? identity.getPrincipal().toText()
+                                : undefined,
+                            })
+                          }
+                          className="mt-3 w-full p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:scale-[1.01] transition-all duration-200 bg-gradient-to-r from-violet-500/20 to-purple-600/20 border border-violet-500/40 hover:border-violet-500/70"
+                          data-ocid="world.download_certificate.button"
+                        >
+                          <Award className="w-5 h-5 text-violet-400" />
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-violet-400">
+                              Download Certificate
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              World complete — claim your certificate
+                            </p>
+                          </div>
+                        </button>
+                      )}
                     </div>
                   </>
                 )}
