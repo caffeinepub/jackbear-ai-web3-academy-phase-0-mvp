@@ -25,6 +25,10 @@ import { useEffect, useState } from "react";
 import CertificateShareSection from "../components/CertificateShareSection";
 import IntelligenceLessonModal from "../components/IntelligenceLessonModal";
 import {
+  IntelligenceModuleShareModal,
+  useModuleShareQueue,
+} from "../components/IntelligenceModuleShareModal";
+import {
   SovereignShareModal,
   useSovereignShareTrigger,
 } from "../components/SovereignShareModal";
@@ -607,6 +611,13 @@ const MODULES: ModuleDef[] = [
   },
 ];
 
+const MODULE_SHARE_META: Array<{ id: string; number: string; title: string }> =
+  MODULES.map((m) => ({
+    id: m.id,
+    number: m.number,
+    title: m.title,
+  }));
+
 // ── Deploy Agent UI ───────────────────────────────────────────────────────────────────
 const AGENT_DEPLOYED_KEY = "jb_agent_deployed";
 
@@ -732,6 +743,7 @@ export default function VerifiableIntelligencePage() {
     dismiss: dismissSovereignShareIntel,
     show: showSovereignShareModal,
   } = useSovereignShareTrigger(isSovereign);
+
   const [moduleExpanded, setModuleExpanded] = useState(false);
   const [module02Expanded, setModule02Expanded] = useState(false);
   const [module03Expanded, setModule03Expanded] = useState(false);
@@ -755,6 +767,19 @@ export default function VerifiableIntelligencePage() {
   const [module05Complete, setModule05Complete] = useState(() =>
     detectModule05Completion(),
   );
+
+  // Module completion share queue — watches real completion state
+  const { pendingModuleId, dismiss: dismissModuleShare } = useModuleShareQueue(
+    {
+      "mod-01": module01Complete,
+      "mod-02": module02Complete,
+      "mod-03": module03Complete,
+      "mod-04": module04Complete,
+      "mod-05": module05Complete,
+    },
+    MODULE_SHARE_META,
+  );
+
   const [lessonProgress, setLessonProgress] = useState(() =>
     getLessonProgress(),
   );
@@ -1899,6 +1924,30 @@ export default function VerifiableIntelligencePage() {
           )}
         </section>
       </div>
+
+      {/* Intelligence Module Share Modal — fires once per module on first completion */}
+      {pendingModuleId &&
+        (() => {
+          const meta = MODULE_SHARE_META.find((m) => m.id === pendingModuleId);
+          if (!meta) return null;
+          const completedCount = [
+            module01Complete,
+            module02Complete,
+            module03Complete,
+            module04Complete,
+            module05Complete,
+          ].filter(Boolean).length;
+          return (
+            <IntelligenceModuleShareModal
+              moduleId={pendingModuleId}
+              moduleTitle={meta.title}
+              moduleNumber={meta.number}
+              completedCount={completedCount}
+              totalModules={5}
+              onClose={dismissModuleShare}
+            />
+          );
+        })()}
 
       {/* Sovereign Share Modal — triggered from Share Achievement button */}
       {showSovereignShareIntel && (
