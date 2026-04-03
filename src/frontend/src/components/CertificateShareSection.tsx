@@ -7,18 +7,13 @@
  * Share platforms: X, LinkedIn, Copy Link, (Facebook + Email as optional)
  * Pre-filled copy: dynamic, using world title and verify URL.
  * No new design system — reuses existing Button + icon patterns.
+ *
+ * Note: Email action shares a verification link and pre-filled text only.
+ * It does NOT attach a PDF certificate.
  */
 
 import { Button } from "@/components/ui/button";
-import {
-  Check,
-  Copy,
-  Facebook,
-  Link,
-  Linkedin,
-  Mail,
-  Share2,
-} from "lucide-react";
+import { Check, Facebook, Link, Linkedin, Mail, Share2 } from "lucide-react";
 import { useState } from "react";
 
 interface CertificateShareSectionProps {
@@ -81,7 +76,7 @@ export default function CertificateShareSection({
 
   function handleEmail() {
     const subject = encodeURIComponent(
-      `My JackBear.ai Certificate — ${worldTitle}`,
+      `My JackBear.ai achievement — ${worldTitle}`,
     );
     const body = encodeURIComponent(xText);
     window.open(`mailto:?subject=${subject}&body=${body}`);
@@ -140,7 +135,7 @@ export default function CertificateShareSection({
           Facebook
         </Button>
 
-        {/* Email */}
+        {/* Email — sends verification link + text, no PDF attachment */}
         <Button
           variant="outline"
           size="sm"
@@ -149,7 +144,7 @@ export default function CertificateShareSection({
           data-ocid="certificate.share.email"
         >
           <Mail size={12} />
-          Email
+          Email achievement link
         </Button>
 
         {/* Copy Link */}
