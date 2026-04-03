@@ -10,6 +10,7 @@ import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { EasterEggGridSection } from "@/components/dashboard/EasterEggGridSection";
 import HowToEarnBPWidget from "@/components/dashboard/HowToEarnBPWidget";
 import LeaderboardDashboardWidget from "@/components/dashboard/LeaderboardDashboardWidget";
+import MyCertificatesSection from "@/components/dashboard/MyCertificatesSection";
 import NewsDashboardWidget from "@/components/dashboard/NewsDashboardWidget";
 import ProgressCertificateSection from "@/components/dashboard/ProgressCertificateSection";
 import PushNotificationsBanner from "@/components/dashboard/PushNotificationsBanner";
@@ -578,6 +579,10 @@ export default function DashboardPage() {
             <ProgressCertificateSection
               completedLessons={completedLessons}
               userDisplayName={userProfile?.displayName}
+            />
+            <MyCertificatesSection
+              allProgress={allProgress ?? []}
+              principal={identity?.getPrincipal().toText()}
             />
           </div>
         </section>
