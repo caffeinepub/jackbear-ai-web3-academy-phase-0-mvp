@@ -285,3 +285,76 @@
   transform: translate(-50%, -50%) !important;
   z-index: 50 !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SOVEREIGN MODE
+   Activated when jb_ui_mode === "sovereign" (all 5 Intelligence modules done).
+   Scoped exclusively through .jb-mode-sovereign — no global theme overrides.
+   Theme-safe: uses Tailwind/CSS-var tokens that adapt to light and dark mode.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Gold glow keyframe — subtle, slow, no flash */
+@keyframes sovereign-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(250 204 21 / 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px rgb(250 204 21 / 0.12);
+  }
+}
+
+/* 1. Module cards (completed) — gold-tinted border + slow glow shadow */
+.jb-mode-sovereign [data-sovereign-card="completed"] {
+  border-color: rgb(250 204 21 / 0.3) !important;
+  animation: sovereign-glow 4s ease-in-out infinite;
+}
+
+/* 2. Buttons — gold outline on hover only, no default change */
+.jb-mode-sovereign button:not([disabled]):hover,
+.jb-mode-sovereign a[role="button"]:hover {
+  outline: 1.5px solid rgb(250 204 21 / 0.4);
+  outline-offset: 2px;
+}
+
+/* 3. Certificate / credential areas — subtle gold divider */
+.jb-mode-sovereign [data-sovereign-credential] {
+  border-top: 1px solid rgb(250 204 21 / 0.2);
+}
+
+/* 4. Leaderboard top-3 rows — subtle gold tint */
+.jb-mode-sovereign [data-sovereign-leaderboard-top] {
+  background-color: rgb(250 204 21 / 0.04) !important;
+  border-color: rgb(250 204 21 / 0.12) !important;
+}
+
+/* ── Sovereign Share Modal animations ───────────────────────────────────────── */
+@keyframes sovereignFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sovereignCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Sovereign Share Achievement button on /intelligence */
+.sovereign-share-achievement-btn {
+  background: oklch(0.72 0.15 85 / 0.08);
+  border: 1px solid oklch(0.72 0.15 85 / 0.3);
+  color: oklch(0.72 0.15 85);
+}
+.sovereign-share-achievement-btn:hover {
+  background: oklch(0.72 0.15 85 / 0.14);
+}

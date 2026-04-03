@@ -121,7 +121,13 @@ export function LeaderboardTable({
               </TableRow>
             ) : (
               entries.map((entry) => (
-                <TableRow key={entry.userId} className="hover:bg-primary/5">
+                <TableRow
+                  key={entry.userId}
+                  className="hover:bg-primary/5"
+                  data-sovereign-leaderboard-top={
+                    entry.rank <= 3 ? "true" : undefined
+                  }
+                >
                   <TableCell className="font-medium">
                     <div className="flex items-center justify-center">
                       {getRankIcon(entry.rank)}

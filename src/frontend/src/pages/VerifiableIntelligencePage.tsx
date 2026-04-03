@@ -12,6 +12,7 @@ import {
   Globe,
   Lock,
   Network,
+  Share2 as ShareIcon,
   Shield,
   Star,
   Telescope,
@@ -21,7 +22,12 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import IntelligenceLessonModal from "../components/IntelligenceLessonModal";
+import {
+  SovereignShareModal,
+  useSovereignShareTrigger,
+} from "../components/SovereignShareModal";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useSovereignMode } from "../hooks/useSovereignMode";
 import { type CoherenceKeyId, readCoherenceKeys } from "../lib/coherenceKeys";
 import { isDevUnlocked } from "../lib/devUnlock";
 import type { LessonContent } from "../lib/lessonContent";
@@ -366,13 +372,13 @@ function StatusDot({ status }: { status: StatusLevel }) {
     return (
       <span className="relative inline-flex h-2 w-2">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_6px_2px_oklch(0.72_0.17_162/0.6)]" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-emerald-400/40" />
       </span>
     );
   }
   if (status === "partial") {
     return (
-      <span className="inline-flex rounded-full h-2 w-2 bg-amber-400 shadow-[0_0_6px_2px_oklch(0.78_0.16_70/0.5)]" />
+      <span className="inline-flex rounded-full h-2 w-2 bg-amber-400 shadow-amber-400/40" />
     );
   }
   return <span className="inline-flex rounded-full h-2 w-2 bg-slate-600" />;
@@ -384,12 +390,14 @@ function SystemStatusHeader({
   module03Complete,
   module04Complete,
   module05Complete,
+  isSovereign,
 }: {
   module01Complete: boolean;
   module02Complete: boolean;
   module03Complete: boolean;
   module04Complete: boolean;
   module05Complete: boolean;
+  isSovereign: boolean;
 }) {
   const statuses: StatusItem[] = [
     {
@@ -439,8 +447,21 @@ function SystemStatusHeader({
           System Status
         </span>
         <span className="ml-auto flex items-center gap-1.5">
-          <span className="inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-          <span className="text-xs font-mono text-emerald-400/80">online</span>
+          {isSovereign ? (
+            <>
+              <span className="inline-flex rounded-full h-1.5 w-1.5 bg-yellow-400" />
+              <span className="text-xs font-mono text-yellow-500 dark:text-yellow-400 font-semibold">
+                SOVEREIGN MODE ACTIVE
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+              <span className="text-xs font-mono text-emerald-400/80">
+                online
+              </span>
+            </>
+          )}
         </span>
       </div>
 
@@ -622,7 +643,7 @@ function DeployAgentPanel() {
           Deploy First Agent
         </button>
       ) : (
-        <div className="inline-flex items-center gap-4 px-5 py-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 ring-1 ring-emerald-500/10 shadow-[0_0_20px_0px_oklch(0.72_0.17_162/0.08)]">
+        <div className="inline-flex items-center gap-4 px-5 py-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 ring-1 ring-emerald-500/10 shadow-sm shadow-emerald-500/10">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">
               Agent
@@ -699,6 +720,11 @@ function LessonRowBadge({ state }: { state: LessonRowState }) {
 // ── Main page ─────────────────────────────────────────────────────────────────────────
 export default function VerifiableIntelligencePage() {
   const { isUnlocked, isDevBypass } = useIntelligenceUnlock();
+  const isSovereign = useSovereignMode();
+  const {
+    shouldShow: showSovereignShareIntel,
+    dismiss: dismissSovereignShareIntel,
+  } = useSovereignShareTrigger(isSovereign);
   const [moduleExpanded, setModuleExpanded] = useState(false);
   const [module02Expanded, setModule02Expanded] = useState(false);
   const [module03Expanded, setModule03Expanded] = useState(false);
@@ -928,7 +954,7 @@ export default function VerifiableIntelligencePage() {
             className="absolute inset-0 pointer-events-none"
             aria-hidden="true"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-950/30 via-background to-cyan-950/20 dark:from-violet-950/50 dark:via-background dark:to-cyan-950/30" />
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-background to-cyan-500/8 dark:from-violet-500/15 dark:via-background dark:to-cyan-500/10" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-500/5 rounded-full blur-3xl" />
           </div>
 
@@ -984,6 +1010,7 @@ export default function VerifiableIntelligencePage() {
                 module03Complete={module03Complete}
                 module04Complete={module04Complete}
                 module05Complete={module05Complete}
+                isSovereign={isSovereign}
               />
 
               {/* Section label */}
@@ -1018,6 +1045,11 @@ export default function VerifiableIntelligencePage() {
                         | "mod-04"
                         | "mod-05"
                     ];
+                  // Sovereign mode: a module is "complete" when all 10 lessons are attempted
+                  const isModuleDone =
+                    isAvailable &&
+                    prog !== undefined &&
+                    prog.lessonsAttempted >= 10;
 
                   return (
                     <div
@@ -1025,9 +1057,14 @@ export default function VerifiableIntelligencePage() {
                       data-ocid={`intelligence.${mod.id}.card`}
                       className={`relative rounded-2xl border overflow-hidden transition-all ${
                         isAvailable
-                          ? "border-violet-500/30 bg-card shadow-lg shadow-violet-500/5"
+                          ? isSovereign && isModuleDone
+                            ? "border-yellow-400/30 bg-card shadow-lg shadow-yellow-400/10"
+                            : "border-violet-500/30 bg-card shadow-lg shadow-violet-500/5"
                           : "border-border/30 bg-card/50 opacity-60"
                       }`}
+                      data-sovereign-card={
+                        isSovereign && isModuleDone ? "completed" : undefined
+                      }
                     >
                       {/* Top accent line — only for available */}
                       {isAvailable && (
@@ -1058,6 +1095,11 @@ export default function VerifiableIntelligencePage() {
                                 <span className="inline-flex items-center gap-1 text-xs text-emerald-400/80 font-mono">
                                   <StatusDot status="active" />
                                   Available
+                                </span>
+                              )}
+                              {isSovereign && isModuleDone && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-yellow-400/10 border border-yellow-400/30 text-yellow-500 dark:text-yellow-400">
+                                  SOVEREIGN
                                 </span>
                               )}
                             </div>
@@ -1669,6 +1711,24 @@ export default function VerifiableIntelligencePage() {
                   );
                 })}
               </div>
+
+              {/* Share Achievement — visible only in Sovereign Mode */}
+              {isSovereign && (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all sovereign-share-achievement-btn"
+                    onClick={() => {
+                      // Re-trigger the share modal by clearing the seen flag
+                      localStorage.removeItem("jb_sovereign_share_seen");
+                      dismissSovereignShareIntel();
+                    }}
+                  >
+                    <ShareIcon className="h-3.5 w-3.5" />
+                    Share Achievement
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             /* Locked state */
@@ -1716,6 +1776,11 @@ export default function VerifiableIntelligencePage() {
           )}
         </section>
       </div>
+
+      {/* Sovereign Share Modal — triggered from Share Achievement button */}
+      {showSovereignShareIntel && (
+        <SovereignShareModal onClose={dismissSovereignShareIntel} />
+      )}
 
       {/* Lesson Modal */}
       {selectedLesson && (

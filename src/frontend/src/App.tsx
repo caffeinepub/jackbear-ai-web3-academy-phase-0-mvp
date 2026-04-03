@@ -15,9 +15,14 @@ import { BearPointsToastListener } from "./components/CoinRewardAnimation";
 import Footer from "./components/Footer";
 import GlobalBPSync from "./components/GlobalBPSync";
 import Header from "./components/Header";
+import {
+  SovereignShareModal,
+  useSovereignShareTrigger,
+} from "./components/SovereignShareModal";
 import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
 import { LanguageProvider } from "./hooks/useLanguage";
 import { usePageViewTracking } from "./hooks/usePageViewTracking";
+import { useSovereignMode } from "./hooks/useSovereignMode";
 import { updatePageMetadata } from "./lib/seo";
 
 import AboutCaffeineAIPage from "./pages/AboutCaffeineAIPage";
@@ -63,6 +68,9 @@ const queryClient = new QueryClient({
 
 function Layout() {
   usePageViewTracking();
+  const isSovereign = useSovereignMode();
+  const { shouldShow: showSovereignShare, dismiss: dismissSovereignShare } =
+    useSovereignShareTrigger(isSovereign);
 
   const { pathname } = useLocation();
 
@@ -79,7 +87,9 @@ function Layout() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div
+      className={`min-h-screen flex flex-col bg-background text-foreground${isSovereign ? " jb-mode-sovereign" : ""}`}
+    >
       <Header />
       <BetaBanner />
       <main className="flex-1">
@@ -89,6 +99,9 @@ function Layout() {
       <BearPointsToastListener />
       <GlobalBPSync />
       <AdditionsRoot />
+      {showSovereignShare && (
+        <SovereignShareModal onClose={dismissSovereignShare} />
+      )}
     </div>
   );
 }

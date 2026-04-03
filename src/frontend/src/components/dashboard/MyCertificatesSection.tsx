@@ -148,6 +148,7 @@ function CertRow({ entry, principal, onUpdate }: CertRowProps) {
     <div
       className="rounded-xl border border-border bg-card/60 p-4 space-y-3"
       data-ocid={`certificate.row.${world.id}`}
+      data-sovereign-credential="true"
     >
       {/* Header row */}
       <div className="flex items-start gap-3">
