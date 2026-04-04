@@ -3,8 +3,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useActor } from "../hooks/useActor";
 
-const STATS_ADMIN_PRINCIPAL =
-  "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe";
+const STATS_ADMIN_PRINCIPALS = [
+  "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe", // dev
+  "mqrud-rxoxo-nbepq-sktaj-q76k5-r67zx-4wcgo-rhqmv-5mwys-3dl7s-zae", // live
+];
 
 interface AdminAnalytics {
   totalRegisteredUsers: bigint;
@@ -68,7 +70,7 @@ export default function AdminStatsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const principalStr = identity?.getPrincipal().toText() ?? "";
-  const isAdmin = principalStr === STATS_ADMIN_PRINCIPAL;
+  const isAdmin = STATS_ADMIN_PRINCIPALS.includes(principalStr);
 
   useEffect(() => {
     if (!identity) return; // still loading auth

@@ -99,8 +99,10 @@ function AppCard({
   );
 }
 
-const ADMIN_PRINCIPAL =
-  "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe";
+const ADMIN_PRINCIPALS = [
+  "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe", // dev
+  "mqrud-rxoxo-nbepq-sktaj-q76k5-r67zx-4wcgo-rhqmv-5mwys-3dl7s-zae", // live
+];
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -276,7 +278,7 @@ export default function DashboardPage() {
 
   const displayName = userProfile?.displayName || "Learner";
   const principalText = identity?.getPrincipal().toString() ?? "";
-  const isAdmin = principalText === ADMIN_PRINCIPAL;
+  const isAdmin = ADMIN_PRINCIPALS.includes(principalText);
 
   // Certificate loading resilience: progress is "loading" until the query
   // has both started AND finished at least once with actor available.
