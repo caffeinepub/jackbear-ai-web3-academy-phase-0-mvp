@@ -20,6 +20,15 @@ export interface AnalyticsStats {
   'totalPageViews' : bigint,
   'streakCount' : bigint,
 }
+export interface AdminAnalytics {
+  'totalRegisteredUsers' : bigint,
+  'dailyActiveUsers' : bigint,
+  'monthlyActiveUsers' : bigint,
+  'totalLessonCompletions' : bigint,
+  'totalQuizPasses' : bigint,
+  'totalBPAwarded' : bigint,
+  'usersWithBP' : bigint,
+}
 export interface BPLeaderboardEntry {
   'displayName' : string,
   'userId' : string,
@@ -128,6 +137,7 @@ export interface _SERVICE {
   'completeOnboarding' : ActorMethod<[string, string], undefined>,
   'completeQuest' : ActorMethod<[CompleteQuestArgs], undefined>,
   'getAllWorld0Lessons' : ActorMethod<[], Array<[string, string]>>,
+  'getAdminAnalytics' : ActorMethod<[], AdminAnalytics>,
   'getAnalyticsStats' : ActorMethod<[], AnalyticsStats>,
   'getBearCredits' : ActorMethod<[], [] | [BearCredits]>,
   'getBestQuizScore' : ActorMethod<[string], [] | [bigint]>,

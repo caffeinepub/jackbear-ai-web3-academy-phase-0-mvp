@@ -27,6 +27,7 @@ import { updatePageMetadata } from "./lib/seo";
 
 import AboutCaffeineAIPage from "./pages/AboutCaffeineAIPage";
 import AdminPage from "./pages/AdminPage";
+import AdminStatsPage from "./pages/AdminStatsPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
 import BPLedgerPage from "./pages/BPLedgerPage";
 import ChainKeyCryptographyPage from "./pages/ChainKeyCryptographyPage";
@@ -233,6 +234,11 @@ const adminRoute = createRoute({
   path: "/admin",
   component: AdminPage,
 });
+const adminStatsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/stats",
+  component: AdminStatsPage,
+});
 const bpLedgerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/bp-history",
@@ -300,6 +306,7 @@ const routeTree = rootRoute.addChildren([
   updatesRoute,
   referralRoute,
   adminRoute,
+  adminStatsRoute,
   bpLedgerRoute,
   monthlyPrizeRoute,
   hangmanRoute,

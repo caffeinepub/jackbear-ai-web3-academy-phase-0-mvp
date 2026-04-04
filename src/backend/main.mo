@@ -1672,4 +1672,85 @@ actor {
     "v469-backend-reprovision"
   };
 
+
+  // ─── ADMIN ANALYTICS (v1) ──────────────────────────────────────────────────
+  // Single admin principal for the analytics dashboard (hardcoded for v1).
+  let STATS_ADMIN_PRINCIPAL = "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe";
+
+  public type AdminAnalytics = {
+    totalRegisteredUsers : Nat;
+    dailyActiveUsers : Nat;
+    monthlyActiveUsers : Nat;
+    totalLessonCompletions : Nat;
+    totalQuizPasses : Nat;
+    totalBPAwarded : Nat;
+    usersWithBP : Nat;
+  };
+
+  /// Admin-only analytics query. Only the designated stats admin principal may call this.
+  /// Aggregates metrics from existing stable stores — no new event tracking added.
+  public query ({ caller }) func getAdminAnalytics() : async AdminAnalytics {
+    if (caller.toText() != STATS_ADMIN_PRINCIPAL) {
+      Runtime.trap("Unauthorized: Admin only");
+    };
+
+    // Total registered users = principals with a UserProfile
+    let totalRegisteredUsers = profiles.size();
+
+    // Daily active users from existing analyticsStats counter
+    let dailyActiveUsers = analyticsStats.dailyActiveUsers;
+
+    // Monthly active users = principals with any entry in monthlyBPPerUser for current month
+    let now = Time.now();
+    let monthNum = Int.abs((now / (30 * 24 * 3_600_000_000_000)) % 12 + 1);
+    let yearNum = Int.abs(now / (365 * 24 * 3_600_000_000_000) + 1970);
+    let monthKey = monthNum.toText() # "_" # yearNum.toText();
+    var monthlyActiveUsers = 0;
+    for (pair in monthlyBPPerUser.toArray().vals()) {
+      if (pair.1.get(monthKey) != null) {
+        monthlyActiveUsers += 1;
+      };
+    };
+
+    // Total lesson completions = sum all lessonFirstCompletions entries where value is true
+    var totalLessonCompletions = 0;
+    for (userPair in lessonFirstCompletions.toArray().vals()) {
+      for (lessonPair in userPair.1.toArray().vals()) {
+        if (lessonPair.1) {
+          totalLessonCompletions += 1;
+        };
+      };
+    };
+
+    // Total quiz passes = count bestQuizScores entries with score > 0
+    var totalQuizPasses = 0;
+    for (userPair in bestQuizScores.toArray().vals()) {
+      for (scorePair in userPair.1.toArray().vals()) {
+        if (scorePair.1 > 0) {
+          totalQuizPasses += 1;
+        };
+      };
+    };
+
+    // Total BP awarded = sum of bearCredits.totalEarned across all users
+    var totalBPAwarded = 0;
+    for (pair in bearCredits.toArray().vals()) {
+      totalBPAwarded += pair.1.totalEarned;
+    };
+
+    // Users with any BP on record
+    let usersWithBP = bearCredits.size();
+
+    {
+      totalRegisteredUsers;
+      dailyActiveUsers;
+      monthlyActiveUsers;
+      totalLessonCompletions;
+      totalQuizPasses;
+      totalBPAwarded;
+      usersWithBP;
+    }
+  };
+  // ─── END ADMIN ANALYTICS ───────────────────────────────────────────────────
+
 };

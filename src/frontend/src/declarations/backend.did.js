@@ -45,6 +45,15 @@ export const AnalyticsStats = IDL.Record({
   'totalPageViews' : IDL.Nat,
   'streakCount' : IDL.Nat,
 });
+export const AdminAnalytics = IDL.Record({
+  'totalRegisteredUsers' : IDL.Nat,
+  'dailyActiveUsers' : IDL.Nat,
+  'monthlyActiveUsers' : IDL.Nat,
+  'totalLessonCompletions' : IDL.Nat,
+  'totalQuizPasses' : IDL.Nat,
+  'totalBPAwarded' : IDL.Nat,
+  'usersWithBP' : IDL.Nat,
+});
 export const BearCredits = IDL.Record({
   'balance' : IDL.Nat,
   'totalEarned' : IDL.Nat,
@@ -153,6 +162,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))],
       ['query'],
     ),
+  'getAdminAnalytics' : IDL.Func([], [AdminAnalytics], ['query']),
   'getAnalyticsStats' : IDL.Func([], [AnalyticsStats], ['query']),
   'getBearCredits' : IDL.Func([], [IDL.Opt(BearCredits)], ['query']),
   'getBestQuizScore' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Nat)], ['query']),
@@ -398,7 +408,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))],
         ['query'],
       ),
-    'getAnalyticsStats' : IDL.Func([], [AnalyticsStats], ['query']),
+    'getAdminAnalytics' : IDL.Func([], [AdminAnalytics], ['query']),
+  'getAnalyticsStats' : IDL.Func([], [AnalyticsStats], ['query']),
     'getBearCredits' : IDL.Func([], [IDL.Opt(BearCredits)], ['query']),
     'getBestQuizScore' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Nat)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
