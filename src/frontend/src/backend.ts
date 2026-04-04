@@ -99,6 +99,16 @@ export interface AnalyticsStats {
     totalPageViews: bigint;
     streakCount: bigint;
 }
+
+export interface AdminAnalytics {
+    totalRegisteredUsers: bigint;
+    dailyActiveUsers: bigint;
+    monthlyActiveUsers: bigint;
+    totalLessonCompletions: bigint;
+    totalQuizPasses: bigint;
+    totalBPAwarded: bigint;
+    usersWithBP: bigint;
+}
 export interface QuizAnswer {
     isCorrect: boolean;
     questionId: string;
@@ -204,6 +214,7 @@ export interface backendInterface {
     completeQuest(args: CompleteQuestArgs): Promise<void>;
     getAllWorld0Lessons(): Promise<Array<[string, string]>>;
     getAnalyticsStats(): Promise<AnalyticsStats>;
+    getAdminAnalytics(): Promise<AdminAnalytics>;
     getBearCredits(): Promise<BearCredits | null>;
     getBestQuizScore(lessonId: string): Promise<bigint | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
@@ -487,6 +498,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAnalyticsStats();
+            return result;
+        }
+    }
+    async getAdminAnalytics(): Promise<AdminAnalytics> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAdminAnalytics();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAdminAnalytics();
             return result;
         }
     }

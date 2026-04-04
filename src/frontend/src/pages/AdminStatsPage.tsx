@@ -89,7 +89,7 @@ export default function AdminStatsPage() {
         const year = BigInt(now.getFullYear());
 
         const [analyticsResult, lb, mlb] = await Promise.all([
-          (actor as any).getAdminAnalytics(),
+          actor!.getAdminAnalytics(),
           (actor as any).getGlobalLeaderboard(),
           (actor as any).getMonthlyLeaderboard(month, year),
         ]);
