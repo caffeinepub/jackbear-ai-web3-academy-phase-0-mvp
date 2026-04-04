@@ -1,24 +1,17 @@
 import LazyYouTubeEmbed from "@/components/LazyYouTubeEmbed";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useActor } from "@/hooks/useActor";
 import { useLanguage } from "@/hooks/useLanguage";
-import {
-  type FlatLeaderboardEntry,
-  fetchGlobalLeaderboard,
-} from "@/lib/leaderboardData";
 import { extractVideoId } from "@/lib/youtube";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Award,
   BookOpen,
   Brain,
   Globe,
   GraduationCap,
   LayoutGrid,
-  Medal,
   Puzzle,
   Shield,
   Sparkles,
@@ -29,58 +22,6 @@ import {
 import { type Variants, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-
-function getRankIcon(rank: number, isDark: boolean) {
-  const fallbackColor = isDark ? "oklch(0.5 0.08 290)" : "oklch(0.35 0.08 290)";
-  if (rank === 1)
-    return (
-      <Trophy
-        style={{
-          width: 18,
-          height: 18,
-          color: "oklch(0.78 0.18 80)",
-          flexShrink: 0,
-          filter: "drop-shadow(0 0 6px oklch(0.78 0.18 80 / 0.6))",
-        }}
-      />
-    );
-  if (rank === 2)
-    return (
-      <Medal
-        style={{
-          width: 18,
-          height: 18,
-          color: "oklch(0.72 0.06 250)",
-          flexShrink: 0,
-        }}
-      />
-    );
-  if (rank === 3)
-    return (
-      <Award
-        style={{
-          width: 18,
-          height: 18,
-          color: "oklch(0.68 0.16 55)",
-          flexShrink: 0,
-        }}
-      />
-    );
-  return (
-    <span
-      style={{
-        fontSize: 13,
-        color: fallbackColor,
-        fontWeight: 700,
-        flexShrink: 0,
-        minWidth: 18,
-        textAlign: "center",
-      }}
-    >
-      #{rank}
-    </span>
-  );
-}
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -94,9 +35,6 @@ const fadeUp: Variants = {
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t: _t } = useLanguage();
-  const { actor, isFetching } = useActor();
-  const [topLeaders, setTopLeaders] = useState<FlatLeaderboardEntry[]>([]);
-  const [leadersLoading, setLeadersLoading] = useState(true);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
 
@@ -125,9 +63,6 @@ export default function LandingPage() {
   const sectionBorder = isDark
     ? "1px solid oklch(0.22 0.08 290)"
     : "1px solid oklch(0.88 0.04 290)";
-  const rowBorder = isDark
-    ? "1px solid oklch(0.22 0.07 290)"
-    : "1px solid oklch(0.90 0.03 290)";
   const headingLgColor = isDark
     ? "oklch(0.92 0.06 290)"
     : "oklch(0.18 0.06 290)";
@@ -150,24 +85,6 @@ export default function LandingPage() {
   const cardDescColor = isDark
     ? "oklch(0.52 0.09 290)"
     : "oklch(0.40 0.07 290)";
-
-  // Leaderboard panel
-  const lbPanelBg = isDark
-    ? "oklch(0.13 0.06 290 / 0.9)"
-    : "oklch(0.99 0.01 290)";
-  const lbPanelBorder = isDark
-    ? "1.5px solid oklch(0.28 0.1 290)"
-    : "1.5px solid oklch(0.85 0.05 290)";
-  const lbRank1NameColor = isDark ? "oklch(0.9 0.1 80)" : "oklch(0.35 0.12 80)";
-  const lbRowNameColor = isDark
-    ? "oklch(0.8 0.08 290)"
-    : "oklch(0.25 0.07 290)";
-  const lbRowBPColor = isDark ? "oklch(0.65 0.18 290)" : "oklch(0.40 0.18 290)";
-  const lbCtaBg = isDark
-    ? "oklch(0.11 0.05 290 / 0.8)"
-    : "oklch(0.96 0.02 290 / 0.8)";
-  const lbCtaColor = isDark ? "oklch(0.65 0.18 290)" : "oklch(0.40 0.18 290)";
-  const emptyColor = isDark ? "oklch(0.5 0.08 290)" : "oklch(0.35 0.08 290)";
 
   // Decode section
   const decodeSectionBg = isDark
@@ -231,24 +148,6 @@ export default function LandingPage() {
       }, 100);
     }
   }, []);
-
-  useEffect(() => {
-    if (isFetching) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const entries = await fetchGlobalLeaderboard(actor);
-        if (!cancelled) setTopLeaders(entries.slice(0, 5));
-      } catch {
-        if (!cancelled) setTopLeaders([]);
-      } finally {
-        if (!cancelled) setLeadersLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [actor, isFetching]);
 
   const heroVideoId =
     extractVideoId("https://www.youtube.com/watch?v=N7j6QdraKlk") ||
@@ -540,231 +439,6 @@ export default function LandingPage() {
                 <Brain style={{ marginRight: 7, width: 16, height: 16 }} />
                 Enter Intelligence
               </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─────────────────────────────────────── WORLD LEADERBOARD */}
-      <section
-        style={{
-          background: sectionBg,
-          borderTop: sectionBorder,
-          borderBottom: sectionBorder,
-          padding: "72px 24px",
-        }}
-      >
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-60px" }}
-            variants={fadeUp}
-            custom={0}
-            style={{ textAlign: "center", marginBottom: 40 }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "oklch(0.78 0.18 80 / 0.1)",
-                border: "1px solid oklch(0.78 0.18 80 / 0.25)",
-                borderRadius: 999,
-                padding: "4px 14px",
-                marginBottom: 16,
-              }}
-            >
-              <Trophy
-                style={{
-                  width: 14,
-                  height: 14,
-                  color: "oklch(0.78 0.18 80)",
-                  filter: "drop-shadow(0 0 4px oklch(0.78 0.18 80 / 0.5))",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "oklch(0.78 0.18 80)",
-                }}
-              >
-                Live Rankings
-              </span>
-            </div>
-            <h2
-              className="font-display"
-              style={{
-                fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
-                fontWeight: 800,
-                color: headingLgColor,
-                marginBottom: 10,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              World Leaderboard
-            </h2>
-            <p
-              style={{
-                fontSize: "0.95rem",
-                color: bodyTextColor,
-                fontWeight: 400,
-              }}
-            >
-              The top learners on JackBear.ai — climb the ranks to claim your
-              spot
-            </p>
-          </motion.div>
-
-          {/* Leaderboard panel */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-60px" }}
-            variants={fadeUp}
-            custom={0.1}
-          >
-            <div
-              style={{
-                background: lbPanelBg,
-                border: lbPanelBorder,
-                borderRadius: 14,
-                overflow: "hidden",
-                boxShadow: "0 4px 40px oklch(0.55 0.22 290 / 0.1)",
-              }}
-            >
-              {leadersLoading ? (
-                [1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "16px 20px",
-                      borderBottom: i < 5 ? rowBorder : "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                    }}
-                    data-ocid="landing.leaderboard.loading_state"
-                  >
-                    <Skeleton className="h-5 w-5 rounded-full" />
-                    <Skeleton className="h-4 flex-1" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                ))
-              ) : topLeaders.length === 0 ? (
-                <div
-                  style={{
-                    padding: "36px 20px",
-                    textAlign: "center",
-                    color: emptyColor,
-                    fontSize: 14,
-                  }}
-                  data-ocid="landing.leaderboard.empty_state"
-                >
-                  No rankings yet — be the first!
-                </div>
-              ) : (
-                topLeaders.map((entry, idx) => {
-                  const isFirst = entry.rank === 1;
-                  return (
-                    <div
-                      key={entry.userId}
-                      style={{
-                        padding: "16px 20px",
-                        borderBottom:
-                          idx < topLeaders.length - 1 ? rowBorder : "none",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        background: isFirst
-                          ? "oklch(0.78 0.18 80 / 0.06)"
-                          : "transparent",
-                        borderLeft: isFirst
-                          ? "3px solid oklch(0.78 0.18 80 / 0.5)"
-                          : "3px solid transparent",
-                      }}
-                      data-ocid={`landing.leaderboard.item.${idx + 1}`}
-                    >
-                      <div
-                        style={{
-                          width: 24,
-                          display: "flex",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {getRankIcon(entry.rank, isDark)}
-                      </div>
-                      <span
-                        style={{
-                          flex: 1,
-                          fontSize: 14,
-                          fontWeight: isFirst ? 700 : 500,
-                          color: isFirst ? lbRank1NameColor : lbRowNameColor,
-                          minWidth: 0,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {entry.displayName}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: isFirst ? "oklch(0.78 0.18 80)" : lbRowBPColor,
-                          flexShrink: 0,
-                          fontFamily: "monospace",
-                        }}
-                      >
-                        {entry.allTimeBP.toLocaleString()}{" "}
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            opacity: 0.7,
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          BP
-                        </span>
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-
-              {/* CTA row */}
-              <div
-                style={{
-                  padding: "14px 20px",
-                  borderTop: rowBorder,
-                  background: lbCtaBg,
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => void navigate({ to: "/leaderboard" })}
-                  data-ocid="landing.leaderboard.primary_button"
-                  style={{
-                    color: lbCtaColor,
-                    fontWeight: 600,
-                    fontSize: 13,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  View Full Leaderboard
-                  <ArrowRight
-                    style={{ marginLeft: 6, width: 14, height: 14 }}
-                  />
-                </Button>
-              </div>
             </div>
           </motion.div>
         </div>
@@ -1311,8 +985,18 @@ export default function LandingPage() {
                   letterSpacing: "0.06em",
                 }}
               >
-                Leaderboard — Preview Mode
+                Monthly Leaderboard Preview
               </h3>
+              <p
+                style={{
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  color: headingMdColor,
+                  marginBottom: 12,
+                }}
+              >
+                Top 5 earn each month.
+              </p>
               <p
                 style={{
                   fontSize: "0.9rem",
@@ -1321,26 +1005,25 @@ export default function LandingPage() {
                   marginBottom: 12,
                 }}
               >
-                #1 — ???
+                🥇 $30
+                <br />🥈 $20
+                <br />🥉 $15
                 <br />
-                #2 — ???
+                4th — $10
                 <br />
-                #3 — ???
-                <br />
-                #4 — ???
-                <br />
-                #5 — ???
+                5th — $5
               </p>
               <p
                 style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
+                  fontSize: "0.875rem",
                   color: bodyTextMuted,
+                  lineHeight: 1.7,
                   marginBottom: 8,
-                  opacity: 0.9,
                 }}
               >
-                Unlocks May 1
+                Resets monthly.
+                <br />
+                Anyone can climb.
               </p>
               <p
                 style={{
@@ -1350,7 +1033,8 @@ export default function LandingPage() {
                   margin: 0,
                 }}
               >
-                Most users will not reach the top.
+                Most players will stay at the surface. A few will reach the top
+                5.
               </p>
             </div>
           </motion.div>

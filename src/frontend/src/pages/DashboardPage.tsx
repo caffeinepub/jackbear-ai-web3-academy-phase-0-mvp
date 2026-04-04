@@ -33,6 +33,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
   Award,
+  BarChart2,
   BookOpen,
   ChevronRight,
   Copy,
@@ -97,6 +98,9 @@ function AppCard({
     </Card>
   );
 }
+
+const ADMIN_PRINCIPAL =
+  "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -272,6 +276,7 @@ export default function DashboardPage() {
 
   const displayName = userProfile?.displayName || "Learner";
   const principalText = identity?.getPrincipal().toString() ?? "";
+  const isAdmin = principalText === ADMIN_PRINCIPAL;
 
   // Certificate loading resilience: progress is "loading" until the query
   // has both started AND finished at least once with actor available.
@@ -328,6 +333,16 @@ export default function DashboardPage() {
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
                   Sovereign
                 </span>
+              )}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/admin/stats" })}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-full whitespace-nowrap hover:bg-red-500/20 transition-colors"
+                  data-ocid="hud.admin.chip"
+                >
+                  Admin
+                </button>
               )}
               <button
                 type="button"
@@ -485,6 +500,19 @@ export default function DashboardPage() {
                 My Credentials
               </button>
             </div>
+
+            {/* Tier 3 — Admin Stats (admin principal only) */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/admin/stats" })}
+                className="group inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 hover:border-red-500/70 text-red-600 dark:text-red-400 font-semibold text-sm transition-all duration-200 cursor-pointer w-full"
+                data-ocid="hud.admin_stats.button"
+              >
+                <BarChart2 className="h-4 w-4 shrink-0" />
+                Admin Stats
+              </button>
+            )}
 
             {/* Tier 3 — NextActionCard for immediate lesson context */}
             <NextActionCard />
