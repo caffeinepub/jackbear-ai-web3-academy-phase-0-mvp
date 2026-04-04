@@ -7,7 +7,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Linkedin, X } from "lucide-react";
+import { Check, Copy, Facebook, Linkedin, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const SITE_URL = "https://jackbear.ai/intelligence";
@@ -46,6 +46,10 @@ function buildXUrl(text: string): string {
 
 function buildLinkedInUrl(): string {
   return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(SITE_URL)}`;
+}
+
+function buildFacebookUrl(): string {
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SITE_URL)}`;
 }
 
 // ── Module accent colours ─────────────────────────────────────────────────────
@@ -148,6 +152,10 @@ export function IntelligenceModuleShareModal({
 
   function handleShareLinkedIn() {
     window.open(buildLinkedInUrl(), "_blank", "noopener,noreferrer");
+  }
+
+  function handleShareFacebook() {
+    window.open(buildFacebookUrl(), "_blank", "noopener,noreferrer");
   }
 
   async function handleCopy() {
@@ -315,6 +323,20 @@ export function IntelligenceModuleShareModal({
             >
               <Linkedin className="h-3.5 w-3.5 mr-2" />
               Share on LinkedIn
+            </Button>
+
+            <Button
+              onClick={handleShareFacebook}
+              className="w-full font-semibold text-sm"
+              variant="outline"
+              style={{
+                background: "oklch(0.13 0.03 280)",
+                borderColor: "oklch(0.55 0.20 280 / 0.35)",
+                color: "oklch(0.76 0.12 280)",
+              }}
+            >
+              <Facebook className="h-3.5 w-3.5 mr-2" />
+              Share on Facebook
             </Button>
 
             <Button

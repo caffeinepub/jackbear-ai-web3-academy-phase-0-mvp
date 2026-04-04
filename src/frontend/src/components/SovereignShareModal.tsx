@@ -7,7 +7,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Share2, X } from "lucide-react";
+import { Check, Copy, Facebook, Share2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const SHARE_SEEN_KEY = "jb_sovereign_share_seen";
@@ -27,6 +27,10 @@ function buildXUrl(): string {
 
 function buildLinkedInUrl(): string {
   return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(SITE_URL)}`;
+}
+
+function buildFacebookUrl(): string {
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SITE_URL)}`;
 }
 
 interface SovereignShareModalProps {
@@ -80,6 +84,10 @@ export function SovereignShareModal({ onClose }: SovereignShareModalProps) {
 
   function handleShareLinkedIn() {
     window.open(buildLinkedInUrl(), "_blank", "noopener,noreferrer");
+  }
+
+  function handleShareFacebook() {
+    window.open(buildFacebookUrl(), "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -222,6 +230,20 @@ export function SovereignShareModal({ onClose }: SovereignShareModalProps) {
             >
               <Share2 className="h-3.5 w-3.5 mr-2" />
               Share on LinkedIn
+            </Button>
+
+            <Button
+              onClick={handleShareFacebook}
+              className="w-full font-semibold text-sm"
+              style={{
+                background: "oklch(0.15 0.03 280)",
+                borderColor: "oklch(0.55 0.20 280 / 0.40)",
+                color: "oklch(0.78 0.12 280)",
+              }}
+              variant="outline"
+            >
+              <Facebook className="h-3.5 w-3.5 mr-2" />
+              Share on Facebook
             </Button>
 
             <Button

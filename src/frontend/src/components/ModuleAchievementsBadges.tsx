@@ -11,7 +11,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { Check, CheckCircle2, Link, Share2 } from "lucide-react";
+import { Check, CheckCircle2, Facebook, Link, Share2 } from "lucide-react";
 import { useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -109,6 +109,14 @@ function ModuleBadgeCard({ module }: { module: ModuleBadgeInfo }) {
     );
   }
 
+  function handleFacebook() {
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
   function handleCopy() {
     navigator.clipboard.writeText(shareUrl).catch(() => {});
     setCopied(true);
@@ -157,6 +165,15 @@ function ModuleBadgeCard({ module }: { module: ModuleBadgeInfo }) {
         >
           <Share2 className="h-3 w-3" />
           Share on X
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+          onClick={handleFacebook}
+        >
+          <Facebook className="h-3 w-3" />
+          Facebook
         </Button>
         <Button
           variant="ghost"
