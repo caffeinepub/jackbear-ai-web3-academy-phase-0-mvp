@@ -1116,15 +1116,15 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────── MONTHLY PRIZE */}
+      {/* ──────────────────────────────────────────── LEADERBOARD ACTIVATION */}
       <section
         style={{
           background: sectionBg2,
           borderBottom: sectionBorder,
-          padding: "48px 24px",
+          padding: "64px 24px",
         }}
       >
-        <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1132,6 +1132,7 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={0}
           >
+            {/* Badge */}
             <Badge
               style={{
                 background: "oklch(0.3 0.06 55 / 0.2)",
@@ -1143,34 +1144,215 @@ export default function LandingPage() {
                 borderRadius: 999,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                marginBottom: 16,
+                marginBottom: 20,
                 display: "inline-block",
               }}
             >
-              Coming Soon
+              ⏳ Starts May 1
             </Badge>
+
+            {/* Hero Title */}
             <h2
               className="font-display"
               style={{
-                fontSize: "clamp(1.4rem, 3.5vw, 2rem)",
-                fontWeight: 800,
+                fontSize: "clamp(1.5rem, 4vw, 2.4rem)",
+                fontWeight: 900,
                 color: headingMdColor,
                 marginBottom: 12,
-                letterSpacing: "-0.01em",
+                letterSpacing: "-0.02em",
               }}
             >
-              Monthly Prize
+              MAY 1 — LEADERBOARD ACTIVATION
             </h2>
+
+            {/* Subline */}
             <p
               style={{
-                fontSize: "0.975rem",
+                fontSize: "1.05rem",
                 color: bodyTextMuted,
-                lineHeight: 1.65,
-                margin: 0,
+                lineHeight: 1.7,
+                marginBottom: 8,
               }}
             >
-              Monthly rewards are coming soon. Top players will earn.
+              Top 5 earn monthly rewards.
             </p>
+            <p
+              style={{
+                fontSize: "1rem",
+                color: bodyTextMuted,
+                lineHeight: 1.7,
+                marginBottom: 4,
+              }}
+            >
+              🥇 $30 • 🥈 $20 • 🥉 $15 • 4th $10 • 5th $5
+            </p>
+
+            {/* Supporting line */}
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: bodyTextMuted,
+                lineHeight: 1.6,
+                marginBottom: 28,
+                opacity: 0.75,
+              }}
+            >
+              Daily Crossword • ICP Decode • Coherence • Intelligence Layer
+            </p>
+
+            {/* CTAs */}
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                justifyContent: "center",
+                flexWrap: "wrap",
+                marginBottom: 20,
+              }}
+            >
+              <Button
+                onClick={() => void navigate({ to: "/courses" })}
+                style={{
+                  background: "oklch(0.55 0.22 290)",
+                  color: "oklch(0.98 0.01 290)",
+                  fontWeight: 700,
+                  padding: "10px 28px",
+                  fontSize: "0.95rem",
+                  borderRadius: 10,
+                  border: "none",
+                }}
+              >
+                Start Playing
+              </Button>
+              <Button
+                onClick={() => void navigate({ to: "/leaderboard" })}
+                variant="outline"
+                style={{
+                  fontWeight: 700,
+                  padding: "10px 28px",
+                  fontSize: "0.95rem",
+                  borderRadius: 10,
+                }}
+              >
+                View Leaderboard Preview
+              </Button>
+            </div>
+
+            {/* Scarcity line */}
+            <p
+              style={{
+                fontSize: "0.78rem",
+                color: bodyTextMuted,
+                opacity: 0.6,
+                marginBottom: 40,
+              }}
+            >
+              Early players will have an advantage.
+            </p>
+
+            {/* How It Works */}
+            <div
+              style={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 12,
+                padding: "24px 28px",
+                textAlign: "left",
+                marginBottom: 20,
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 800,
+                  color: headingMdColor,
+                  marginBottom: 12,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                How It Works
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  color: bodyTextMuted,
+                  lineHeight: 1.8,
+                  margin: 0,
+                }}
+              >
+                Play daily → earn points
+                <br />
+                Unlock deeper layers → earn more
+                <br />
+                Climb the leaderboard → finish top 5<br />
+                <br />
+                Resets every month.
+              </p>
+            </div>
+
+            {/* Leaderboard Preview */}
+            <div
+              style={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 12,
+                padding: "24px 28px",
+                textAlign: "left",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 800,
+                  color: headingMdColor,
+                  marginBottom: 12,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Leaderboard — Preview Mode
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  color: bodyTextMuted,
+                  lineHeight: 2,
+                  marginBottom: 12,
+                }}
+              >
+                #1 — ???
+                <br />
+                #2 — ???
+                <br />
+                #3 — ???
+                <br />
+                #4 — ???
+                <br />
+                #5 — ???
+              </p>
+              <p
+                style={{
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  color: bodyTextMuted,
+                  marginBottom: 8,
+                  opacity: 0.9,
+                }}
+              >
+                Unlocks May 1
+              </p>
+              <p
+                style={{
+                  fontSize: "0.78rem",
+                  color: bodyTextMuted,
+                  opacity: 0.55,
+                  margin: 0,
+                }}
+              >
+                Most users will not reach the top.
+              </p>
+            </div>
           </motion.div>
         </div>
       </section>

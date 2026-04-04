@@ -3,43 +3,10 @@ import { updatePageMetadata } from "@/lib/seo";
 import { useNavigate } from "@tanstack/react-router";
 
 updatePageMetadata({
-  title: "Monthly Prize | JackBear.ai",
+  title: "Monthly Leaderboard Rewards | JackBear.ai",
   description:
-    "The Monthly Prize is not currently running. Leaderboards and rewards will return after final testing and relaunch.",
+    "Top 5 players each month earn USDC rewards. Play daily, earn Bear Points, and climb the leaderboard. Next cycle begins May 1.",
 });
-
-const HOW_TO_WIN = [
-  {
-    icon: "fa-user-plus",
-    title: "Create Account",
-    desc: "Sign up with Internet Identity — the most secure login on Web3.",
-  },
-  {
-    icon: "fa-star",
-    title: "Earn Bear Points",
-    desc: "Complete lessons, ace quizzes, discover hidden fragments, and keep your streak.",
-  },
-  {
-    icon: "fa-trophy",
-    title: "Top the Leaderboard",
-    desc: "Accumulate the most BP in the calendar month to claim the top spot.",
-  },
-  {
-    icon: "fa-coins",
-    title: "Claim Your Prize",
-    desc: "Submit your USDC wallet address. Prize dispatched within 48 hours.",
-  },
-];
-
-const RULES = [
-  "Leaderboard resets at the start of each calendar month (UTC).",
-  "The user with the most Bear Points at month end wins automatically.",
-  "Winner must submit a USDC receive address on the leaderboard page.",
-  "Prize dispatched manually within 48 hours of valid claim submission.",
-  "USDC accepted on any EVM-compatible chain (ETH, Base, Polygon, etc.).",
-  "One winner per month. Prize amount may change with 7 days notice.",
-  "Fraudulent or bot-generated BP is disqualified at admin discretion.",
-];
 
 export default function MonthlyPrizePage() {
   const navigate = useNavigate();
@@ -80,7 +47,7 @@ export default function MonthlyPrizePage() {
             margin: "0 auto",
           }}
         >
-          {/* Coming Soon pill */}
+          {/* Active pill */}
           <div
             style={{
               display: "inline-flex",
@@ -94,7 +61,7 @@ export default function MonthlyPrizePage() {
             }}
           >
             <i
-              className="fas fa-medal"
+              className="fas fa-trophy"
               style={{ color: "hsl(var(--muted-foreground))" }}
             />
             <span
@@ -106,11 +73,11 @@ export default function MonthlyPrizePage() {
                 color: "hsl(var(--muted-foreground))",
               }}
             >
-              Coming Soon
+              ⏳ Starts May 1
             </span>
           </div>
 
-          {/* Medal icon */}
+          {/* Trophy icon */}
           <div
             style={{
               fontSize: 48,
@@ -118,7 +85,7 @@ export default function MonthlyPrizePage() {
               color: "hsl(var(--muted-foreground))",
             }}
           >
-            <i className="fas fa-medal" />
+            <i className="fas fa-trophy" />
           </div>
 
           <h1
@@ -130,7 +97,7 @@ export default function MonthlyPrizePage() {
               marginBottom: 16,
             }}
           >
-            Monthly Prize
+            Monthly Leaderboard Rewards
           </h1>
           <p
             style={{
@@ -140,69 +107,42 @@ export default function MonthlyPrizePage() {
               lineHeight: 1.5,
             }}
           >
-            Monthly Prize is not currently running.
+            Top 5 earn monthly rewards.
           </p>
           <p
             style={{
-              fontSize: 14,
-              color: "hsl(var(--muted-foreground) / 0.7)",
+              fontSize: 16,
+              color: "hsl(var(--muted-foreground))",
               marginBottom: 36,
               lineHeight: 1.5,
             }}
           >
-            Leaderboards and rewards will return after final testing and
-            relaunch.
+            🥇 $30 • 🥈 $20 • 🥉 $15 • 4th $10 • 5th $5
           </p>
 
           <Button
             onClick={() => void navigate({ to: "/leaderboard" })}
             data-ocid="monthly_prize.primary_button"
-            variant="outline"
             style={{
               fontWeight: 700,
               padding: "10px 28px",
               fontSize: 14,
             }}
           >
-            <i className="fas fa-trophy mr-2" />
-            View Leaderboard
+            <i className="fas fa-arrow-up mr-2" />
+            Start Climbing the Leaderboard
           </Button>
         </div>
       </section>
 
-      {/* ── How to Win (dimmed — for future reference) ───────────────── */}
+      {/* ── Prizes ─────────────────────────────────────────────────────────── */}
       <section
         style={{
-          padding: "48px 16px",
+          padding: "48px 16px 0",
           maxWidth: 640,
           margin: "0 auto",
-          opacity: 0.6,
         }}
       >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 12,
-          }}
-        >
-          <span
-            style={{
-              display: "inline-block",
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "hsl(var(--muted-foreground))",
-              background: "hsl(var(--muted))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: 999,
-              padding: "3px 12px",
-              marginBottom: 16,
-            }}
-          >
-            Available when the prize relaunches
-          </span>
-        </div>
         <h2
           style={{
             fontSize: 20,
@@ -213,85 +153,69 @@ export default function MonthlyPrizePage() {
           }}
         >
           <i
-            className="fas fa-circle-question"
+            className="fas fa-medal"
             style={{ color: "hsl(var(--muted-foreground))", marginRight: 8 }}
           />
-          How to Win
+          Top 5 each month earn:
         </h2>
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: 16,
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 12,
+            padding: "20px 24px",
+            marginBottom: 32,
           }}
         >
-          {HOW_TO_WIN.map((step, i) => (
+          {[
+            { rank: "🥇 1st", amount: "$30 USDC" },
+            { rank: "🥈 2nd", amount: "$20 USDC" },
+            { rank: "🥉 3rd", amount: "$15 USDC" },
+            { rank: "4th", amount: "$10 USDC" },
+            { rank: "5th", amount: "$5 USDC" },
+          ].map((row, idx, arr) => (
             <div
-              key={step.title}
+              key={row.rank}
               style={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: 10,
-                padding: "16px 18px",
                 display: "flex",
-                gap: 14,
-                alignItems: "flex-start",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "10px 0",
+                borderBottom:
+                  idx < arr.length - 1
+                    ? "1px solid hsl(var(--border))"
+                    : "none",
               }}
             >
-              <div
+              <span
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  background: "hsl(var(--muted))",
-                  border: "1px solid hsl(var(--border))",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "hsl(var(--foreground))",
                 }}
               >
-                <i
-                  className={`fas ${step.icon}`}
-                  style={{
-                    color: "hsl(var(--muted-foreground))",
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "hsl(var(--foreground))",
-                    marginBottom: 4,
-                  }}
-                >
-                  {i + 1}. {step.title}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "hsl(var(--muted-foreground))",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {step.desc}
-                </div>
-              </div>
+                {row.rank}
+              </span>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "hsl(var(--foreground))",
+                }}
+              >
+                {row.amount}
+              </span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Prize Rules (dimmed — for future reference) ─────────────── */}
+      {/* ── How It Works ───────────────────────────────────────────────────── */}
       <section
         style={{
-          padding: "0 16px 64px",
+          padding: "0 16px 32px",
           maxWidth: 640,
           margin: "0 auto",
-          opacity: 0.6,
         }}
       >
         <h2
@@ -304,56 +228,323 @@ export default function MonthlyPrizePage() {
           }}
         >
           <i
-            className="fas fa-scale-balanced"
+            className="fas fa-circle-question"
             style={{ color: "hsl(var(--muted-foreground))", marginRight: 8 }}
           />
-          Prize Rules
+          How It Works
         </h2>
         <div
           style={{
             background: "hsl(var(--card))",
             border: "1px solid hsl(var(--border))",
-            borderRadius: 10,
+            borderRadius: 12,
             padding: "20px 24px",
+            marginBottom: 24,
           }}
         >
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {RULES.map((rule, idx) => (
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.7,
+              marginBottom: 12,
+            }}
+          >
+            Your position is based on activity and progression across:
+          </p>
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              margin: "0 0 12px",
+            }}
+          >
+            {[
+              "Daily Crossword",
+              "ICP Decode",
+              "Coherence Layer",
+              "Intelligence Layer",
+            ].map((item) => (
               <li
-                key={rule}
+                key={item}
                 style={{
+                  fontSize: 14,
+                  color: "hsl(var(--muted-foreground))",
+                  padding: "3px 0",
                   display: "flex",
-                  gap: 10,
-                  alignItems: "flex-start",
-                  padding: "6px 0",
-                  borderBottom:
-                    idx < RULES.length - 1
-                      ? "1px solid hsl(var(--border))"
-                      : "none",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
                 <i
                   className="fas fa-check"
-                  style={{
-                    color: "hsl(var(--muted-foreground))",
-                    fontSize: 12,
-                    marginTop: 3,
-                    flexShrink: 0,
-                  }}
+                  style={{ fontSize: 11, flexShrink: 0 }}
                 />
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "hsl(var(--muted-foreground))",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {rule}
-                </span>
+                {item}
               </li>
             ))}
           </ul>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.6,
+              margin: 0,
+            }}
+          >
+            More progress = more points.
+          </p>
         </div>
+      </section>
+
+      {/* ── Reset Rule ─────────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "0 16px 32px",
+          maxWidth: 640,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 12,
+            padding: "20px 24px",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              color: "hsl(var(--muted-foreground))",
+              marginBottom: 8,
+            }}
+          >
+            Reset Rule
+          </h3>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--foreground))",
+              lineHeight: 1.65,
+              marginBottom: 4,
+            }}
+          >
+            Leaderboard resets on the 1st of every month.
+          </p>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.65,
+              margin: 0,
+            }}
+          >
+            New cycle. New winners.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Start Timing ───────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "0 16px 32px",
+          maxWidth: 640,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 12,
+            padding: "20px 24px",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              color: "hsl(var(--muted-foreground))",
+              marginBottom: 8,
+            }}
+          >
+            Start Timing
+          </h3>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--foreground))",
+              lineHeight: 1.65,
+              marginBottom: 4,
+            }}
+          >
+            Next cycle begins: May 1
+          </p>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.65,
+              margin: 0,
+            }}
+          >
+            All progress from that point forward counts.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Strategy Hint ──────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "0 16px 32px",
+          maxWidth: 640,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 12,
+            padding: "20px 24px",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              color: "hsl(var(--muted-foreground))",
+              marginBottom: 8,
+            }}
+          >
+            Strategy
+          </h3>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.65,
+              margin: 0,
+            }}
+          >
+            Users who unlock deeper layers earn faster.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Reality Check ──────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "0 16px 32px",
+          maxWidth: 640,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 12,
+            padding: "20px 24px",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              color: "hsl(var(--muted-foreground))",
+              marginBottom: 8,
+            }}
+          >
+            Reality Check
+          </h3>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.65,
+              marginBottom: 4,
+            }}
+          >
+            Most players will stay at the surface.
+          </p>
+          <p
+            style={{
+              fontSize: 14,
+              color: "hsl(var(--muted-foreground))",
+              lineHeight: 1.65,
+              margin: 0,
+            }}
+          >
+            Only a few will reach the top 5.
+          </p>
+        </div>
+      </section>
+
+      {/* ── CTA ────────────────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "0 16px 48px",
+          maxWidth: 640,
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <Button
+          onClick={() => void navigate({ to: "/leaderboard" })}
+          data-ocid="monthly_prize.cta_button"
+          style={{
+            fontWeight: 700,
+            padding: "12px 32px",
+            fontSize: 15,
+          }}
+        >
+          <i className="fas fa-arrow-up mr-2" />
+          Start Climbing the Leaderboard
+        </Button>
+      </section>
+
+      {/* ── Footer ─────────────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "0 16px 64px",
+          maxWidth: 640,
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            fontSize: 12,
+            color: "hsl(var(--muted-foreground))",
+            opacity: 0.6,
+            lineHeight: 1.6,
+            marginBottom: 4,
+          }}
+        >
+          Rewards are distributed after each monthly cycle ends.
+        </p>
+        <p
+          style={{
+            fontSize: 12,
+            color: "hsl(var(--muted-foreground))",
+            opacity: 0.45,
+            lineHeight: 1.6,
+            margin: 0,
+          }}
+        >
+          This is not a giveaway. It&#39;s a ranking.
+        </p>
       </section>
     </div>
   );
