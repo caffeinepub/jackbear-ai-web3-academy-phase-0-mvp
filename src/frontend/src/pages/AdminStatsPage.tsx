@@ -88,13 +88,18 @@ export default function AdminStatsPage() {
         const month = BigInt(now.getMonth() + 1);
         const year = BigInt(now.getFullYear());
 
+        // Run analytics and leaderboard independently so a backend trap on
+        // getAdminAnalytics (e.g. wrong principal) cannot kill the leaderboard data.
         const [analyticsResult, lb, mlb] = await Promise.all([
-          actor!.getAdminAnalytics(),
-          (actor as any).getGlobalLeaderboard(),
-          (actor as any).getMonthlyLeaderboard(month, year),
+          actor!.getAdminAnalytics().catch((e: unknown) => {
+            console.warn("[AdminStats] getAdminAnalytics failed:", e);
+            return null;
+          }),
+          actor!.getGlobalLeaderboard(),
+          actor!.getMonthlyLeaderboard(month, year),
         ]);
 
-        setAnalytics(analyticsResult as AdminAnalytics);
+        if (analyticsResult) setAnalytics(analyticsResult as AdminAnalytics);
         setLeaderboard((lb as LeaderboardEntry[]).slice(0, 10));
         setMonthlyBoard((mlb as LeaderboardEntry[]).slice(0, 10));
       } catch (e: any) {

@@ -1674,8 +1674,22 @@ actor {
 
 
   // ─── ADMIN ANALYTICS (v1) ──────────────────────────────────────────────────
-  // Single admin principal for the analytics dashboard (hardcoded for v1).
-  let STATS_ADMIN_PRINCIPAL = "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe";
+  // Stable var preserved for upgrade compatibility — do not remove.
+  stable var STATS_ADMIN_PRINCIPAL = "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe";
+
+  // Allowlist — both dev and live principals are admin.
+  let STATS_ADMIN_PRINCIPALS : [Text] = [
+    "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe", // dev
+    "mqrud-rxoxo-nbepq-sktaj-q76k5-r67zx-4wcgo-rhqmv-5mwys-3dl7s-zae",  // live
+  ];
+
+  func isStatsAdmin(p : Principal) : Bool {
+    let t = p.toText();
+    for (a in STATS_ADMIN_PRINCIPALS.vals()) {
+      if (t == a) return true;
+    };
+    false
+  };
 
   public type AdminAnalytics = {
     totalRegisteredUsers : Nat;
@@ -1687,10 +1701,10 @@ actor {
     usersWithBP : Nat;
   };
 
-  /// Admin-only analytics query. Only the designated stats admin principal may call this.
+  /// Admin-only analytics query. Only principals in STATS_ADMIN_PRINCIPALS may call this.
   /// Aggregates metrics from existing stable stores — no new event tracking added.
   public query ({ caller }) func getAdminAnalytics() : async AdminAnalytics {
-    if (caller.toText() != STATS_ADMIN_PRINCIPAL) {
+    if (not isStatsAdmin(caller)) {
       Runtime.trap("Unauthorized: Admin only");
     };
 

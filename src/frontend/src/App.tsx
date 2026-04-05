@@ -50,6 +50,7 @@ import MonthlyPrizePage from "./pages/MonthlyPrizePage";
 import NewsPage from "./pages/NewsPage";
 import RealTimeICPFeedPage from "./pages/RealTimeICPFeedPage";
 import ReferralPage from "./pages/ReferralPage";
+import SponsorsPage from "./pages/SponsorsPage";
 import UpdatesPage from "./pages/UpdatesPage";
 import VaultPage from "./pages/VaultPage";
 import VerifiableIntelligencePage from "./pages/VerifiableIntelligencePage";
@@ -280,6 +281,12 @@ const intelligenceRoute = createRoute({
   component: VerifiableIntelligencePage,
 });
 
+const sponsorsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sponsors",
+  component: SponsorsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   coursesRoute,
@@ -314,6 +321,7 @@ const routeTree = rootRoute.addChildren([
   gamesRoute,
   intelligenceRoute,
   verifyRoute,
+  sponsorsRoute,
   verifyTokenRoute,
 ]);
 
