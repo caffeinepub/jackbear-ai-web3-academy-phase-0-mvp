@@ -6,21 +6,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useActor } from "@/hooks/useActor";
 import {
   Activity,
+  ArrowDown,
   ArrowRight,
+  Award,
   BarChart3,
+  BookOpen,
+  CheckCircle,
   ChevronDown,
-  Cpu,
   Globe,
+  Key,
   Lock,
   RefreshCw,
   Shield,
   Sparkles,
   TrendingUp,
+  Trophy,
   Users,
   Zap,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { useTheme } from "next-themes";
+import { motion } from "motion/react";
+import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -56,1334 +61,928 @@ function useAnimatedCounter(target: number, duration = 1200) {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [target, duration]);
 
   return display;
 }
 
-// ─── Live Dot ────────────────────────────────────────────────────────────────
+// ─── LiveDot ─────────────────────────────────────────────────────────────────
 
 function LiveDot({ color = "#4ade80" }: { color?: string }) {
   return (
-    <span className="relative inline-flex h-2 w-2">
+    <span className="relative inline-flex h-2.5 w-2.5">
       <span
         className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
         style={{ backgroundColor: color }}
       />
       <span
-        className="relative inline-flex h-2 w-2 rounded-full"
+        className="relative inline-flex h-2.5 w-2.5 rounded-full"
         style={{ backgroundColor: color }}
       />
     </span>
   );
 }
 
-// ─── Metric Card ─────────────────────────────────────────────────────────────
+// ─── MetricCard ──────────────────────────────────────────────────────────────
 
 interface MetricCardProps {
   label: string;
   value: string | number | null;
-  subtext: string;
-  icon: React.ReactNode;
-  isLive?: boolean;
-  isLoading?: boolean;
-  isText?: boolean;
-  adminOnly?: boolean;
+  suffix?: string;
+  why?: string;
+  loading?: boolean;
+  gold?: boolean;
 }
 
 function MetricCard({
   label,
   value,
-  subtext,
-  icon,
-  isLive = false,
-  isLoading = false,
-  isText = false,
-  adminOnly = false,
+  suffix,
+  why,
+  loading,
+  gold,
 }: MetricCardProps) {
-  const numericTarget =
-    !isText && !adminOnly && value !== null && value !== "—"
-      ? Number(value)
-      : 0;
+  const numericTarget = typeof value === "number" ? value : 0;
   const animated = useAnimatedCounter(numericTarget);
+  const isNumeric = typeof value === "number";
+  const isLive = value !== null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.45 }}
-      className="relative flex flex-col gap-3 rounded-xl p-5"
-      style={{
-        background: "oklch(0.13 0.06 290)",
-        border: "1px solid oklch(0.55 0.22 290 / 0.25)",
-        boxShadow: "0 0 24px -8px oklch(0.55 0.22 290 / 0.35)",
-      }}
+    <div
+      className={`rounded-xl border p-6 flex flex-col gap-2 ${
+        gold
+          ? "border-yellow-400/40 bg-yellow-400/5"
+          : "border-white/10 bg-white/5"
+      }`}
     >
-      {/* Live indicator */}
-      {isLive && (
-        <span className="absolute right-4 top-4">
-          <LiveDot />
-        </span>
-      )}
-
-      {/* Top row */}
-      <div className="flex items-center gap-2">
-        <span style={{ color: "oklch(0.55 0.22 290)" }}>{icon}</span>
-        <span
-          className="text-xs font-semibold uppercase tracking-widest"
-          style={{ color: "oklch(0.55 0.1 290)" }}
-        >
+      <div className="flex items-center gap-2 mb-1">
+        <LiveDot color={gold ? "#facc15" : "#4ade80"} />
+        <span className="text-xs font-semibold uppercase tracking-widest text-white/40">
           {label}
         </span>
-        {adminOnly && (
-          <Badge
-            variant="outline"
-            className="ml-auto text-[10px]"
-            style={{
-              borderColor: "oklch(0.55 0.22 290 / 0.4)",
-              color: "oklch(0.55 0.1 290)",
-            }}
-          >
-            Verified by admin
-          </Badge>
-        )}
       </div>
-
-      {/* Value */}
-      <div className="min-h-[3rem]">
-        {isLoading ? (
-          <Skeleton
-            className="h-9 w-24"
-            style={{ background: "oklch(0.18 0.05 290)" }}
-          />
-        ) : (
-          <motion.div
-            key={String(value)}
-            initial={{ scale: 0.95, opacity: 0.6 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-3xl font-black tracking-tight"
-            style={{ color: "oklch(0.92 0.06 290)" }}
-          >
-            {isText || adminOnly
-              ? (value ?? "—")
-              : value === null
-                ? "—"
-                : animated.toLocaleString()}
-          </motion.div>
-        )}
-      </div>
-
-      {/* Subtext */}
-      <p className="text-xs" style={{ color: "oklch(0.50 0.08 290)" }}>
-        {subtext}
-      </p>
-    </motion.div>
+      {loading ? (
+        <Skeleton className="h-9 w-24 bg-white/10" />
+      ) : (
+        <div
+          className={`text-3xl font-bold ${
+            gold ? "text-yellow-400" : "text-white"
+          }`}
+        >
+          {isNumeric ? animated.toLocaleString() : (value as string)}
+          {suffix && isLive && (
+            <span className="ml-1 text-base font-normal text-white/40">
+              {suffix}
+            </span>
+          )}
+        </div>
+      )}
+      {why && (
+        <p className="text-sm text-white/50 leading-relaxed mt-1">{why}</p>
+      )}
+    </div>
   );
 }
 
-// ─── Package Card ────────────────────────────────────────────────────────────
+// ─── PackageCard ─────────────────────────────────────────────────────────────
 
 interface PackageCardProps {
-  tier: "starter" | "growth" | "dominance";
-  badge: string;
+  tier: string;
+  tagline: string;
   price: string;
   features: string[];
   reach: string;
-  isHighlighted?: boolean;
+  ctaSubject: string;
+  note: string;
+  highlighted?: boolean;
 }
 
 function PackageCard({
   tier,
-  badge,
+  tagline,
   price,
   features,
   reach,
-  isHighlighted = false,
+  ctaSubject,
+  note,
+  highlighted,
 }: PackageCardProps) {
-  const subject = `Sponsor%20Partnership%20%E2%80%94%20${encodeURIComponent(badge)}`;
-  const mailtoHref = `mailto:sponsors@jackbear.ai?subject=${subject}`;
-
-  const badgeColor =
-    tier === "growth"
-      ? "oklch(0.80 0.18 85)"
-      : tier === "dominance"
-        ? "oklch(0.65 0.22 290)"
-        : "oklch(0.55 0.10 290)";
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="relative flex flex-col rounded-2xl p-6"
-      style={{
-        background: isHighlighted
-          ? "oklch(0.15 0.08 290)"
-          : "oklch(0.12 0.05 290)",
-        border: isHighlighted
-          ? "1.5px solid oklch(0.80 0.18 85 / 0.6)"
-          : "1px solid oklch(0.55 0.22 290 / 0.2)",
-        boxShadow: isHighlighted
-          ? "0 0 40px -10px oklch(0.80 0.18 85 / 0.4)"
-          : "0 0 20px -8px oklch(0.55 0.22 290 / 0.2)",
-      }}
+    <div
+      className={`rounded-xl border p-7 flex flex-col gap-5 relative ${
+        highlighted
+          ? "border-yellow-400/50 bg-yellow-400/5"
+          : "border-white/10 bg-white/5"
+      }`}
     >
-      {isHighlighted && (
-        <div
-          className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[11px] font-bold uppercase tracking-widest"
-          style={{
-            background: "oklch(0.80 0.18 85)",
-            color: "oklch(0.10 0.05 85)",
-          }}
-        >
+      {highlighted && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
           Most Popular
-        </div>
-      )}
-
-      {/* Badge + Price */}
-      <div className="mb-4">
-        <span
-          className="text-xs font-black uppercase tracking-widest"
-          style={{ color: badgeColor }}
-        >
-          {badge}
         </span>
-        <p
-          className="mt-1 text-2xl font-black"
-          style={{ color: "oklch(0.92 0.06 290)" }}
-        >
-          {price}
+      )}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-1">
+          {tier}
         </p>
+        <h3 className="text-xl font-bold text-white">{tagline}</h3>
       </div>
-
-      <Separator style={{ background: "oklch(0.55 0.22 290 / 0.15)" }} />
-
-      {/* Features */}
-      <ul className="my-5 flex flex-col gap-2.5">
+      <p
+        className={`text-2xl font-bold ${highlighted ? "text-yellow-400" : "text-white"}`}
+      >
+        {price}
+      </p>
+      <ul className="flex flex-col gap-2">
         {features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <span style={{ color: "oklch(0.65 0.22 290)" }}>✓</span>
-            <span className="text-sm" style={{ color: "oklch(0.70 0.08 290)" }}>
-              {f}
-            </span>
+          <li key={f} className="flex items-start gap-2 text-sm text-white/70">
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-green-400" />
+            {f}
           </li>
         ))}
       </ul>
-
-      {/* Reach estimate */}
-      <div
-        className="mb-5 rounded-lg px-4 py-3"
-        style={{ background: "oklch(0.09 0.05 290)" }}
-      >
-        <p
-          className="text-[11px] uppercase tracking-wider"
-          style={{ color: "oklch(0.50 0.08 290)" }}
-        >
-          Estimated reach
-        </p>
-        <p className="mt-0.5 text-lg font-bold" style={{ color: badgeColor }}>
-          {reach}
-        </p>
+      <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+        <span className="font-semibold text-white/80">Reach:</span> {reach}
       </div>
+      <div className="mt-auto">
+        <a
+          href={`mailto:sponsors@jackbear.ai?subject=${encodeURIComponent(ctaSubject)}`}
+          className="block"
+          data-ocid="sponsors.request_access.button"
+        >
+          <Button
+            className={`w-full ${
+              highlighted
+                ? "bg-yellow-400 hover:bg-yellow-300 text-black font-bold"
+                : "border border-white/20 bg-transparent text-white hover:bg-white/10"
+            }`}
+          >
+            Request Access <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        </a>
+        <p className="text-center text-xs text-white/40 mt-2">{note}</p>
+      </div>
+    </div>
+  );
+}
 
-      <Button
-        asChild
-        className="mt-auto w-full font-bold uppercase tracking-wide"
-        style={{
-          background: isHighlighted
-            ? "oklch(0.80 0.18 85)"
-            : "oklch(0.55 0.22 290)",
-          color: isHighlighted ? "oklch(0.10 0.05 85)" : "oklch(0.98 0.01 290)",
-          border: "none",
-        }}
-        data-ocid={`sponsors.${tier}.primary_button`}
-      >
-        <a href={mailtoHref}>Request Access</a>
-      </Button>
-    </motion.div>
+// ─── EnterpriseCard ──────────────────────────────────────────────────────────
+
+interface EnterpriseFeature {
+  icon: React.ReactNode;
+  label: string;
+  desc: string;
+}
+
+function EnterpriseCard() {
+  const features: EnterpriseFeature[] = [
+    {
+      icon: <Shield className="w-5 h-5 text-yellow-400" />,
+      label: "Category Exclusivity",
+      desc: "One enterprise partner per vertical. Once filled, it's closed permanently.",
+    },
+    {
+      icon: <BookOpen className="w-5 h-5 text-yellow-400" />,
+      label: "Native Lesson Integration",
+      desc: "Your brand woven directly into relevant lessons and quiz flows — not displayed beside them.",
+    },
+    {
+      icon: <Trophy className="w-5 h-5 text-yellow-400" />,
+      label: "Leaderboard Ownership",
+      desc: "Your brand on the monthly leaderboard. Seen by every competing user, every session.",
+    },
+    {
+      icon: <BarChart3 className="w-5 h-5 text-yellow-400" />,
+      label: "Private Real-Time Dashboard",
+      desc: "A live analytics panel built for your team. No waiting for reports.",
+    },
+    {
+      icon: <Sparkles className="w-5 h-5 text-yellow-400" />,
+      label: "AI-Generated Campaign Reports",
+      desc: "Automated weekly intelligence reports on user engagement with your brand.",
+    },
+    {
+      icon: <Users className="w-5 h-5 text-yellow-400" />,
+      label: "Founder Direct Access",
+      desc: "Direct line to the JackBear.ai founder for campaign strategy and custom integrations.",
+    },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-8 md:p-12">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
+          <Badge className="w-fit bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 uppercase tracking-widest text-xs font-bold">
+            FLAGSHIP PARTNER
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold text-white">
+            Enterprise — Embedded Attention
+          </h2>
+          <p className="text-white/60 text-lg max-w-2xl">
+            This is not advertising. This is embedded attention. One brand per
+            category. Platform-level presence across every surface.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {features.map((f) => (
+            <div
+              key={f.label}
+              className="rounded-xl border border-yellow-400/15 bg-black/30 p-5 flex flex-col gap-2"
+            >
+              <div className="flex items-center gap-2">
+                {f.icon}
+                <span className="font-semibold text-white text-sm">
+                  {f.label}
+                </span>
+              </div>
+              <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-4 border-t border-yellow-400/20">
+          <div className="flex flex-col gap-1">
+            <p className="text-yellow-400 font-bold text-xl">
+              Starting at $10,000/mo — Custom pricing available
+            </p>
+            <p className="text-white/40 text-sm italic">
+              "Only one partner per category. Once filled, it's closed."
+            </p>
+          </div>
+          <a
+            href="mailto:sponsors@jackbear.ai?subject=Enterprise%20Partnership%20Application"
+            data-ocid="sponsors.enterprise.button"
+          >
+            <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 text-base whitespace-nowrap">
+              Apply for Enterprise <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function SponsorsPage() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme !== "light";
-  const { actor } = useActor();
-
+  const { actor, isFetching } = useActor();
   const [metrics, setMetrics] = useState<PublicMetrics | null>(null);
   const [leaderboardSize, setLeaderboardSize] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const tiersSectionRef = useRef<HTMLDivElement>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!actor) return;
-    setRefreshing(true);
     try {
-      const [pub, lb] = await Promise.all([
+      const [m, lb] = await Promise.all([
         actor.getPublicMetrics(),
         actor.getGlobalLeaderboard(),
       ]);
-      setMetrics(pub);
-      setLeaderboardSize((lb as BPLeaderboardEntry[]).length);
+      setMetrics(m as PublicMetrics);
+      setLeaderboardSize(
+        Array.isArray(lb) ? (lb as BPLeaderboardEntry[]).length : 0,
+      );
       setLastUpdated(new Date());
     } catch {
-      // silently retain previous values
+      // silent
     } finally {
-      setIsLoading(false);
-      setRefreshing(false);
+      setLoading(false);
     }
   }, [actor]);
 
   useEffect(() => {
-    fetchData();
-    const id = setInterval(fetchData, 30_000);
-    return () => clearInterval(id);
-  }, [fetchData]);
-
-  const scrollToTiers = () => {
-    tiersSectionRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
+    if (actor && !isFetching) {
+      fetchData();
+      intervalRef.current = setInterval(fetchData, 30_000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [actor, isFetching, fetchData]);
 
   // Derived values
   const activeLearners = metrics ? Number(metrics.activeLearnersToday) : null;
   const avgProgress = metrics ? Number(metrics.averageProgress) : null;
   const topLesson = metrics?.mostCompletedLessonWeekly ?? null;
-
   const lb = leaderboardSize ?? 0;
-  const reachStarter =
-    lb > 0 ? `~${(lb * 3).toLocaleString()} learners/mo` : "~300+ learners/mo";
-  const reachGrowth =
-    lb > 0
-      ? `~${(lb * 8).toLocaleString()} impressions/mo`
-      : "~800+ impressions/mo";
-  const reachDominance =
-    lb > 0
-      ? `~${(lb * 20).toLocaleString()}+ impressions/mo`
-      : "~2,000+ impressions/mo";
+  const reachStarter = lb * 3;
+  const reachGrowth = lb * 8;
+  const reachDominance = lb * 20;
 
-  // Background & color tokens
-  const pageBg = isDark ? "oklch(0.09 0.05 290)" : "oklch(0.97 0.02 290)";
-  const sectionBg = isDark ? "oklch(0.11 0.04 290)" : "oklch(0.95 0.03 290)";
-  const headingColor = isDark ? "oklch(0.95 0.06 290)" : "oklch(0.15 0.12 290)";
-  const subColor = isDark ? "oklch(0.60 0.10 290)" : "oklch(0.40 0.08 290)";
-  const bodyColor = isDark ? "oklch(0.70 0.08 290)" : "oklch(0.30 0.06 290)";
-  const cardBg = isDark ? "oklch(0.13 0.06 290)" : "oklch(0.99 0.01 290)";
-  const cardBorder = isDark
-    ? "oklch(0.55 0.22 290 / 0.22)"
-    : "oklch(0.55 0.22 290 / 0.15)";
-  const violet = "oklch(0.55 0.22 290)";
-  const gold = "oklch(0.80 0.18 85)";
+  const fadeUp = {
+    initial: { opacity: 0, y: 30 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: 0.5 },
+  };
 
+  // ── SECTION 1 — HERO ───────────────────────────────────────────────────────
   return (
-    <div
-      className="min-h-screen font-sans"
-      style={{ background: pageBg, color: headingColor }}
-      data-ocid="sponsors.page"
-    >
-      {/* ── A: HERO ─────────────────────────────────────────────────────── */}
-      <section
-        className="relative flex min-h-[92vh] flex-col items-center justify-center overflow-hidden px-6 py-24 text-center"
-        style={{
-          background: isDark
-            ? "radial-gradient(ellipse 80% 70% at 50% 30%, oklch(0.18 0.12 290 / 0.6), oklch(0.09 0.05 290))"
-            : "radial-gradient(ellipse 80% 70% at 50% 30%, oklch(0.88 0.08 290 / 0.5), oklch(0.97 0.02 290))",
-        }}
-      >
-        {/* Ambient glow orb */}
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20"
-          style={{
-            background:
-              "radial-gradient(circle, oklch(0.55 0.22 290), transparent 70%)",
-            filter: "blur(60px)",
-          }}
-        />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* HERO */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-20 overflow-hidden">
+        {/* bg gradient */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-yellow-400/5 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(250,204,21,0.08),transparent)]" />
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="relative z-10 flex flex-col items-center gap-6"
+          {...fadeUp}
+          className="flex flex-col items-center text-center gap-6 max-w-4xl mx-auto"
         >
-          {/* Live chip */}
-          <div
-            className="flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest"
-            style={{
-              background: isDark
-                ? "oklch(0.15 0.08 290)"
-                : "oklch(0.92 0.05 290)",
-              border: `1px solid ${violet}`,
-              color: violet,
-            }}
-          >
-            <LiveDot />
-            Sponsor Intelligence
+          {/* Chip */}
+          <div className="flex items-center gap-2 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1.5">
+            <LiveDot color="#facc15" />
+            <span className="text-xs font-bold uppercase tracking-widest text-yellow-400">
+              SPONSOR INTELLIGENCE
+            </span>
           </div>
 
           {/* Headline */}
-          <h1
-            className="max-w-4xl text-4xl font-black uppercase leading-none tracking-tight md:text-6xl lg:text-7xl"
-            style={{ color: headingColor }}
-          >
-            Verifiable attention{" "}
-            <span style={{ color: violet }}>infrastructure</span> for the AI
-            era.
+          <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight">
+            <span className="text-yellow-400">1M+ Impressions.</span>
+            <br />
+            Real Users. Live Proof.
           </h1>
 
           {/* Subheadline */}
-          <p
-            className="max-w-2xl text-base leading-relaxed md:text-lg"
-            style={{ color: bodyColor }}
-          >
-            JackBear.ai is not a newsletter. It&rsquo;s a gamified Web3
-            education layer where users earn rewards for learning.{" "}
-            <strong style={{ color: headingColor }}>
-              Your brand lives inside the loop.
-            </strong>
+          <p className="text-lg md:text-xl text-white/60 max-w-2xl leading-relaxed">
+            JackBear.ai is a gamified Web3 AI learning platform built on ICP.
+            Users earn rewards for learning. Sponsors get verified attention
+            inside an active engagement loop — not a passive feed.
           </p>
 
-          {/* Live stat */}
-          <div
-            className="flex items-center gap-3 rounded-xl px-6 py-4"
-            style={{
-              background: isDark
-                ? "oklch(0.13 0.06 290 / 0.8)"
-                : "oklch(0.98 0.02 290 / 0.8)",
-              border: `1px solid ${violet}`,
-              backdropFilter: "blur(12px)",
-            }}
-          >
-            <LiveDot />
-            {isLoading ? (
-              <Skeleton
-                className="h-5 w-40"
-                style={{ background: "oklch(0.18 0.05 290)" }}
-              />
-            ) : (
-              <span
-                className="text-sm font-semibold"
-                style={{ color: headingColor }}
-              >
-                <span className="text-2xl font-black" style={{ color: violet }}>
-                  {activeLearners !== null
-                    ? activeLearners.toLocaleString()
-                    : "—"}
-                </span>{" "}
-                learners active today
+          {/* Proof Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-3xl mt-2">
+            <div className="flex items-center gap-2 rounded-xl border border-yellow-400/30 bg-yellow-400/5 px-4 py-3">
+              <TrendingUp className="w-4 h-4 text-yellow-400 shrink-0" />
+              <span className="text-sm font-semibold text-yellow-400">
+                1M+ X Impressions
               </span>
-            )}
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button
-              asChild
-              size="lg"
-              className="gap-2 rounded-xl px-8 font-bold uppercase tracking-wide"
-              style={{
-                background: violet,
-                color: "oklch(0.98 0.01 290)",
-                border: "none",
-                boxShadow: `0 0 28px -6px ${violet}`,
-              }}
-              data-ocid="sponsors.hero.primary_button"
-            >
-              <a href="mailto:sponsors@jackbear.ai?subject=Sponsor%20Partnership">
-                Partner With Us
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              className="gap-2 rounded-xl px-8 font-bold uppercase tracking-wide"
-              style={{
-                background: "transparent",
-                border: `1px solid ${violet}`,
-                color: violet,
-              }}
-              onClick={scrollToTiers}
-              data-ocid="sponsors.hero.secondary_button"
-            >
-              View Packages
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── B: LIVE METRICS STRIP ───────────────────────────────────────── */}
-      <section className="px-4 py-20" style={{ background: sectionBg }}>
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10 flex flex-col items-center gap-2 text-center">
-            <p
-              className="text-xs font-bold uppercase tracking-widest"
-              style={{ color: violet }}
-            >
-              Live Platform Metrics
-            </p>
-            <h2 className="text-2xl font-black" style={{ color: headingColor }}>
-              This is not a screenshot.
-            </h2>
-            <div
-              className="flex items-center gap-2 text-sm"
-              style={{ color: subColor }}
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`}
-              />
-              Refreshes every 30 seconds
-              {lastUpdated && (
-                <span>· Last: {lastUpdated.toLocaleTimeString()}</span>
-              )}
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <Users className="w-4 h-4 text-white/60 shrink-0" />
+              <span className="text-sm font-semibold text-white">
+                {leaderboardSize
+                  ? `${leaderboardSize}+ Registered`
+                  : "Growing Users"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <BookOpen className="w-4 h-4 text-white/60 shrink-0" />
+              <span className="text-sm font-semibold text-white">
+                {activeLearners
+                  ? `${(activeLearners * 12).toLocaleString()}+ Lessons`
+                  : "Thousands of Lessons"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <Shield className="w-4 h-4 text-white/60 shrink-0" />
+              <span className="text-sm font-semibold text-white">
+                ICP Verified
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Italic proof line */}
+          <p className="text-white/40 italic text-sm md:text-base">
+            &quot;Sponsors don't guess performance here — they watch it happen
+            live.&quot;
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+            <a
+              href="mailto:sponsors@jackbear.ai?subject=Partnership%20Application"
+              data-ocid="sponsors.apply.primary_button"
+            >
+              <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 text-base">
+                Apply for Partnership <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .getElementById("live-activity")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+              data-ocid="sponsors.live_activity.button"
+              className="inline-flex items-center justify-center rounded-md border border-white/20 bg-transparent px-8 py-3 text-base font-medium text-white hover:bg-white/10 transition-colors"
+            >
+              View Live Activity <ChevronDown className="ml-2 w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
+        >
+          <ArrowDown className="w-5 h-5 text-white/30" />
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 2 — TRACTION */}
+      <section className="px-4 py-20 md:py-24 max-w-4xl mx-auto">
+        <motion.div {...fadeUp} className="flex flex-col gap-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-white">
+            Proven Attention. Early Infrastructure.
+          </h2>
+          <div className="flex flex-col gap-6 text-white/60 text-lg leading-relaxed">
+            <p>
+              Over 1 million impressions generated organically on X — without
+              paid ads. That's real reach from a community that cares about
+              Web3, AI, and the Internet Computer.
+            </p>
+            <p>
+              That audience didn't just see a post. They clicked, followed, and
+              joined a platform with lessons, quizzes, and reward loops. Passive
+              attention became active users.
+            </p>
+            <p>
+              Now we're turning that attention into infrastructure. Every day,
+              users complete lessons, earn Bear Points, climb leaderboards, and
+              unlock deeper content. Engagement compounds.
+            </p>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-yellow-400 italic">
+            &quot;We've already proven attention. Now we're owning
+            engagement.&quot;
+          </p>
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 3 — LIVE PLATFORM ACTIVITY */}
+      <section
+        id="live-activity"
+        className="px-4 py-20 md:py-24 max-w-6xl mx-auto"
+      >
+        <motion.div {...fadeUp} className="flex flex-col gap-8">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <LiveDot />
+              <span className="text-xs font-bold uppercase tracking-widest text-green-400">
+                LIVE
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-white">
+              Live Platform Activity (Real-Time)
+            </h2>
+            <p className="text-white/50 text-lg max-w-2xl">
+              Early-stage and growing. Every number below updates automatically.
+              These are authenticated users taking real actions — not passive
+              impressions.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <MetricCard
               label="Active Learners Today"
               value={activeLearners}
-              subtext="Authenticated sessions in the past 24h"
-              icon={<Activity className="h-4 w-4" />}
-              isLive
-              isLoading={isLoading}
+              suffix="users"
+              why="Real users who completed at least one lesson or quiz in the last 24 hours."
+              loading={loading}
             />
             <MetricCard
               label="Avg Progress Score"
-              value={avgProgress !== null ? `${avgProgress}%` : null}
-              subtext="Lesson + quiz completion rate across all users"
-              icon={<TrendingUp className="h-4 w-4" />}
-              isLive
-              isLoading={isLoading}
-              isText
+              value={avgProgress}
+              suffix="pts"
+              why="Measures how deep users go per session — a proxy for engagement quality."
+              loading={loading}
             />
             <MetricCard
               label="Top Lesson This Week"
-              value={topLesson ?? "—"}
-              subtext="Most completed lesson in the last 7 days"
-              icon={<Sparkles className="h-4 w-4" />}
-              isLive
-              isLoading={isLoading}
-              isText
+              value={topLesson ?? "Loading..."}
+              why="Shows which content is driving the most repeat visits."
+              loading={loading}
             />
             <MetricCard
-              label="Leaderboard Size"
+              label="Leaderboard Competitors"
               value={leaderboardSize}
-              subtext="Competitive users tracked on the all-time board"
-              icon={<Users className="h-4 w-4" />}
-              isLive
-              isLoading={isLoading}
+              suffix="ranked"
+              why="Only users who've earned Bear Points appear here — verified active participants."
+              loading={loading}
             />
             <MetricCard
               label="Platform Status"
               value="LIVE"
-              subtext="Internet Computer — 99.9% uptime"
-              icon={<Globe className="h-4 w-4" />}
-              isLive
-              isLoading={false}
-              isText
+              why="Real-time infrastructure, not a screenshot."
+              gold
             />
           </div>
-        </div>
-      </section>
 
-      {/* ── C: ENGAGEMENT DEPTH ─────────────────────────────────────────── */}
-      <section className="px-4 py-20" style={{ background: pageBg }}>
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <p
-              className="mb-2 text-xs font-bold uppercase tracking-widest"
-              style={{ color: violet }}
-            >
-              Engagement Depth
-            </p>
-            <h2
-              className="text-3xl font-black md:text-4xl"
-              style={{ color: headingColor }}
-            >
-              Users don&rsquo;t scroll. They participate.
-            </h2>
-            <p className="mt-3 text-base" style={{ color: bodyColor }}>
-              Every session is an active loop: lesson → quiz → reward → return.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {[
-              {
-                icon: <Zap className="h-5 w-5" />,
-                title: "Lesson → Quiz Loops",
-                body: "Every lesson ends with a quiz. Users must pass to earn Bear Points. Passive views earn nothing.",
-              },
-              {
-                icon: <Activity className="h-5 w-5" />,
-                title: "Daily Streak System",
-                body: "Streak-based rewards bring users back every day. Engagement is compulsory for earnings.",
-              },
-              {
-                icon: <TrendingUp className="h-5 w-5" />,
-                title: "Leaderboard Competition",
-                body: "Monthly resets mean every user restarts the race. Competitive engagement stays fresh.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.45 }}
-                className="rounded-xl p-6"
-                style={{
-                  background: cardBg,
-                  border: `1px solid ${cardBorder}`,
-                }}
-              >
-                <div
-                  className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg"
-                  style={{
-                    background: "oklch(0.55 0.22 290 / 0.15)",
-                    color: violet,
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <h3
-                  className="mb-2 text-base font-black"
-                  style={{ color: headingColor }}
-                >
-                  {item.title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: bodyColor }}
-                >
-                  {item.body}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Insight callout */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-8 rounded-2xl border-l-4 px-8 py-6"
-            style={{
-              background: isDark
-                ? "oklch(0.13 0.07 290 / 0.6)"
-                : "oklch(0.94 0.04 290)",
-              borderLeftColor: violet,
-            }}
-          >
-            <p
-              className="text-base italic leading-relaxed"
-              style={{ color: bodyColor }}
-            >
-              &ldquo;The average Web2 platform gets 2 minutes of passive
-              attention. JackBear.ai earns{" "}
-              <strong style={{ color: headingColor }}>
-                active participation loops
-              </strong>{" "}
-              — multiple sessions per visit.&rdquo;
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── D: VIRAL ENGINE ─────────────────────────────────────────────── */}
-      <section className="px-4 py-20" style={{ background: sectionBg }}>
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <p
-              className="mb-2 text-xs font-bold uppercase tracking-widest"
-              style={{ color: gold }}
-            >
-              Viral Engine
-            </p>
-            <h2
-              className="text-3xl font-black md:text-4xl"
-              style={{ color: headingColor }}
-            >
-              Built-in growth loops.{" "}
-              <span style={{ color: gold }}>No ad spend required.</span>
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {[
-              {
-                icon: <Lock className="h-5 w-5" />,
-                title: "Coherence Key System",
-                body: "Three hidden terms that users hunt, discover, and share. Every discovery is a share moment.",
-              },
-              {
-                icon: <RefreshCw className="h-5 w-5" />,
-                title: "Monthly Leaderboard Reset",
-                body: "Every new month is a new race. Users share their rank, invite rivals, create organic traffic.",
-              },
-              {
-                icon: <Shield className="h-5 w-5" />,
-                title: "Intelligence Certification",
-                body: "Users earn verifiable credentials they post publicly. Each certificate is a brand impression.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.45 }}
-                className="rounded-xl p-6"
-                style={{
-                  background: cardBg,
-                  border: "1px solid oklch(0.80 0.18 85 / 0.2)",
-                }}
-              >
-                <div
-                  className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg"
-                  style={{
-                    background: "oklch(0.80 0.18 85 / 0.12)",
-                    color: gold,
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <h3
-                  className="mb-2 text-base font-black"
-                  style={{ color: headingColor }}
-                >
-                  {item.title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: bodyColor }}
-                >
-                  {item.body}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mt-8 text-center text-sm font-bold uppercase tracking-widest"
-            style={{ color: gold }}
-          >
-            Every user is a distribution node. Sponsor placement travels with
-            them.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* ── E: PERFORMANCE VISUALS ───────────────────────────────────────── */}
-      <section className="px-4 py-20" style={{ background: pageBg }}>
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <p
-              className="mb-2 text-xs font-bold uppercase tracking-widest"
-              style={{ color: violet }}
-            >
-              Performance Visuals
-            </p>
-            <h2 className="text-3xl font-black" style={{ color: headingColor }}>
-              The numbers tell the story.
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Engagement Funnel */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="rounded-xl p-6"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-            >
-              <h3
-                className="mb-4 text-sm font-black uppercase tracking-wide"
-                style={{ color: headingColor }}
-              >
-                Engagement Funnel
-              </h3>
-              <div className="flex flex-col gap-2">
-                {[
-                  { label: "Visit", pct: 100 },
-                  { label: "Sign Up", pct: 65 },
-                  { label: "First Lesson", pct: 48 },
-                  { label: "Active (3+ lessons)", pct: 31 },
-                  { label: "Returning (weekly)", pct: 20 },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center gap-3">
-                    <span
-                      className="w-32 shrink-0 text-right text-xs"
-                      style={{ color: subColor }}
-                    >
-                      {row.label}
-                    </span>
-                    <div
-                      className="h-6 flex-1 overflow-hidden rounded-sm"
-                      style={{ background: "oklch(0.09 0.05 290)" }}
-                    >
-                      <motion.div
-                        initial={{ width: "0%" }}
-                        whileInView={{ width: `${row.pct}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.1 }}
-                        className="h-full rounded-sm"
-                        style={{
-                          background:
-                            "linear-gradient(90deg, oklch(0.55 0.22 290), oklch(0.65 0.18 300))",
-                          opacity: 0.4 + row.pct / 200,
-                        }}
-                      />
-                    </div>
-                    <span
-                      className="w-10 shrink-0 text-xs font-bold"
-                      style={{ color: violet }}
-                    >
-                      {row.pct}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Activity Bar Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="rounded-xl p-6"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-            >
-              <h3
-                className="mb-4 text-sm font-black uppercase tracking-wide"
-                style={{ color: headingColor }}
-              >
-                Feature Engagement
-              </h3>
-              <div className="flex flex-col gap-3">
-                {[
-                  { label: "Lesson Worlds", pct: 91 },
-                  { label: "Daily Crossword", pct: 85 },
-                  { label: "ICP Decode", pct: 72 },
-                  { label: "Coherence Keys", pct: 43 },
-                  { label: "Intelligence Layer", pct: 38 },
-                ].map((row) => (
-                  <div key={row.label}>
-                    <div className="mb-1 flex justify-between">
-                      <span className="text-xs" style={{ color: subColor }}>
-                        {row.label}
-                      </span>
-                      <span
-                        className="text-xs font-bold"
-                        style={{ color: gold }}
-                      >
-                        {row.pct}%
-                      </span>
-                    </div>
-                    <div
-                      className="h-3 overflow-hidden rounded-full"
-                      style={{ background: "oklch(0.09 0.05 290)" }}
-                    >
-                      <motion.div
-                        initial={{ width: "0%" }}
-                        whileInView={{ width: `${row.pct}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.2 }}
-                        className="h-full rounded-full"
-                        style={{
-                          background:
-                            "linear-gradient(90deg, oklch(0.55 0.22 290), oklch(0.80 0.18 85))",
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Platform Growth */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-center justify-center rounded-xl p-6 text-center"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-            >
-              <h3
-                className="mb-4 text-sm font-black uppercase tracking-wide"
-                style={{ color: headingColor }}
-              >
-                Platform Growth
-              </h3>
-              <div
-                className="mb-3 text-6xl font-black"
-                style={{ color: violet }}
-              >
-                {leaderboardSize !== null ? (
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={leaderboardSize}
-                      initial={{ scale: 0.85, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 1.1, opacity: 0 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      {leaderboardSize.toLocaleString()}
-                    </motion.span>
-                  </AnimatePresence>
-                ) : (
-                  <span style={{ color: subColor }}>—</span>
-                )}
-              </div>
-              <p
-                className="text-sm font-semibold"
-                style={{ color: headingColor }}
-              >
-                Ranked learners
-              </p>
-              <p className="mt-2 text-xs" style={{ color: subColor }}>
-                Organic growth. No paid traffic.
-              </p>
-            </motion.div>
-          </div>
-
-          <p
-            className="mt-6 text-center text-[11px]"
-            style={{
-              color: isDark ? "oklch(0.40 0.06 290)" : "oklch(0.55 0.06 290)",
-            }}
-          >
-            Indicative of platform structure. Funnel and feature engagement are
-            illustrative benchmarks.
+          <p className="text-white/40 italic text-sm">
+            &quot;These metrics reflect authenticated user behavior, not passive
+            impressions.&quot;
           </p>
-        </div>
-      </section>
 
-      {/* ── F: SPONSOR VALUE BLOCK ───────────────────────────────────────── */}
-      <section className="px-4 py-20" style={{ background: sectionBg }}>
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <p
-              className="mb-2 text-xs font-bold uppercase tracking-widest"
-              style={{ color: violet }}
-            >
-              Sponsor Value
-            </p>
-            <h2 className="text-3xl font-black" style={{ color: headingColor }}>
-              What your investment actually buys.
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {[
-              {
-                icon: <Users className="h-5 w-5" />,
-                title: "Reach",
-                body: "Active learners × session depth = verified impressions. Not bounce clicks.",
-              },
-              {
-                icon: <BarChart3 className="h-5 w-5" />,
-                title: "Engagement",
-                body: "Average time-on-platform is measured in lesson completions, not seconds.",
-              },
-              {
-                icon: <Cpu className="h-5 w-5" />,
-                title: "Conversion",
-                body: "Users who earn BP are invested users. Your brand placement lands in a motivated state.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                className="rounded-xl p-6"
-                style={{
-                  background: cardBg,
-                  border: `1px solid ${cardBorder}`,
-                }}
-              >
-                <div
-                  className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg"
-                  style={{
-                    background: "oklch(0.55 0.22 290 / 0.15)",
-                    color: violet,
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <h3 className="mb-2 font-black" style={{ color: headingColor }}>
-                  {item.title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: bodyColor }}
-                >
-                  {item.body}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-10 rounded-2xl p-8 text-center"
-            style={{
-              background: isDark
-                ? "oklch(0.12 0.08 290)"
-                : "oklch(0.93 0.05 290)",
-              border: `1px solid ${violet}`,
-              boxShadow: `0 0 40px -12px ${violet}`,
-            }}
-          >
-            <p
-              className="text-lg font-black leading-snug"
-              style={{ color: headingColor }}
-            >
-              &ldquo;This is not banner advertising. This is{" "}
-              <span style={{ color: violet }}>context-native placement</span>{" "}
-              inside an active learning loop.&rdquo;
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── G: SPONSOR PACKAGES ─────────────────────────────────────────── */}
-      <section
-        id="sponsor-tiers"
-        ref={tiersSectionRef}
-        className="px-4 py-20"
-        style={{ background: pageBg }}
-        data-ocid="sponsors.tiers.section"
-      >
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <p
-              className="mb-2 text-xs font-bold uppercase tracking-widest"
-              style={{ color: violet }}
-            >
-              Sponsor Packages
-            </p>
-            <h2 className="text-3xl font-black" style={{ color: headingColor }}>
-              Three ways to own the attention.
-            </h2>
-            <p className="mt-2 text-sm" style={{ color: subColor }}>
-              All packages include transparent performance reporting.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-6 pt-4 md:grid-cols-3">
-            <PackageCard
-              tier="starter"
-              badge="Starter"
-              price="Starting at $500/mo"
-              features={[
-                "Logo in platform footer",
-                "Monthly stats report",
-                '"Powered by" badge on 1 page',
-                "Email mention in monthly recap",
-              ]}
-              reach={reachStarter}
-            />
-            <PackageCard
-              tier="growth"
-              badge="Growth"
-              price="Starting at $2,000/mo"
-              features={[
-                "Featured placement on Dashboard",
-                "Brand integration in Daily Crossword",
-                "Monthly leaderboard title sponsor",
-                "Custom quest or challenge",
-                "Weekly performance dashboard",
-              ]}
-              reach={reachGrowth}
-              isHighlighted
-            />
-            <PackageCard
-              tier="dominance"
-              badge="Dominance"
-              price="Custom pricing"
-              features={[
-                "Platform-wide integration",
-                'Named leaderboard ("Powered by [Brand]")',
-                "Intelligence Layer module co-branding",
-                "Native campaign design",
-                "Real-time sponsor analytics access",
-                "Direct founder onboarding",
-              ]}
-              reach={reachDominance}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── H: TRUST LAYER ──────────────────────────────────────────────── */}
-      <section className="px-4 py-20" style={{ background: sectionBg }}>
-        <div className="mx-auto max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <p
-              className="mb-2 text-xs font-bold uppercase tracking-widest"
-              style={{ color: violet }}
-            >
-              Trust Layer
-            </p>
-            <h2 className="text-3xl font-black" style={{ color: headingColor }}>
-              Live data. No screenshots. No theater.
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {[
-              {
-                icon: <Shield className="h-5 w-5" />,
-                title: "On-Chain Verifiable",
-                body: "Every metric is derived from Internet Computer blockchain state. Immutable. Auditable.",
-              },
-              {
-                icon: <Lock className="h-5 w-5" />,
-                title: "Real Users, Real Actions",
-                body: "Metrics are authenticated activity only. No anonymous bots inflating counts.",
-              },
-              {
-                icon: <Globe className="h-5 w-5" />,
-                title: "Transparent by Default",
-                body: "What you see here is what exists. No inflated deck numbers.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                className="rounded-xl p-6"
-                style={{
-                  background: cardBg,
-                  border: `1px solid ${cardBorder}`,
-                }}
-              >
-                <div
-                  className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg"
-                  style={{
-                    background: "oklch(0.55 0.22 290 / 0.15)",
-                    color: violet,
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <h3 className="mb-2 font-black" style={{ color: headingColor }}>
-                  {item.title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: bodyColor }}
-                >
-                  {item.body}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Badge row */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-3"
-          >
-            {[
-              { label: "🔒 ICP Blockchain" },
-              { label: "✓ Authenticated Only" },
-              { label: "↻ Auto-Refreshed" },
-            ].map((b) => (
-              <span
-                key={b.label}
-                className="rounded-full px-4 py-1.5 text-xs font-bold"
-                style={{
-                  background: isDark
-                    ? "oklch(0.15 0.08 290)"
-                    : "oklch(0.90 0.05 290)",
-                  border: `1px solid ${violet}`,
-                  color: violet,
-                }}
-              >
-                {b.label}
+          <div className="flex items-center gap-4">
+            {lastUpdated && (
+              <span className="text-xs text-white/30">
+                Last updated: {lastUpdated.toLocaleTimeString()}
               </span>
-            ))}
-          </motion.div>
-        </div>
+            )}
+            <button
+              type="button"
+              onClick={fetchData}
+              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+              data-ocid="sponsors.refresh.button"
+            >
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </button>
+          </div>
+        </motion.div>
       </section>
 
-      {/* ── I: FINAL CTA ────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden px-6 py-28 text-center"
-        style={{
-          background: isDark
-            ? "radial-gradient(ellipse 80% 60% at 50% 50%, oklch(0.16 0.10 290 / 0.8), oklch(0.09 0.05 290))"
-            : "radial-gradient(ellipse 80% 60% at 50% 50%, oklch(0.87 0.07 290 / 0.7), oklch(0.97 0.02 290))",
-        }}
-        data-ocid="sponsors.cta.section"
-      >
-        {/* Glow orb */}
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-15"
-          style={{
-            background:
-              "radial-gradient(circle, oklch(0.55 0.22 290), transparent 65%)",
-            filter: "blur(80px)",
-          }}
-        />
+      <Separator className="bg-white/5" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative z-10 mx-auto max-w-3xl"
-        >
-          <p
-            className="mb-3 text-xs font-bold uppercase tracking-widest"
-            style={{ color: violet }}
-          >
-            Final CTA
-          </p>
-          <h2
-            className="mb-6 text-4xl font-black uppercase leading-tight tracking-tight md:text-5xl"
-            style={{ color: headingColor }}
-          >
-            Own attention{" "}
-            <span style={{ color: gold }}>before it gets expensive.</span>
-          </h2>
-          <p
-            className="mb-10 text-base leading-relaxed"
-            style={{ color: bodyColor }}
-          >
-            Web3 education is the fastest growing attention vertical.
-            JackBear.ai is already the infrastructure. Early sponsors lock in
-            pricing and positioning before this becomes competitive.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button
-              asChild
-              size="lg"
-              className="gap-2 rounded-xl px-10 py-5 text-base font-black uppercase tracking-wide"
-              style={{
-                background: violet,
-                color: "oklch(0.98 0.01 290)",
-                border: "none",
-                boxShadow: `0 0 36px -8px ${violet}`,
-              }}
-              data-ocid="sponsors.final.primary_button"
-            >
-              <a href="mailto:sponsors@jackbear.ai?subject=Sponsor%20Partnership">
-                Become a Sponsor
-                <ArrowRight className="h-5 w-5" />
-              </a>
-            </Button>
-
-            <Button
-              disabled
-              size="lg"
-              variant="outline"
-              className="gap-2 rounded-xl px-10 py-5 text-base font-bold uppercase tracking-wide opacity-40"
-              style={{
-                border: `1px solid ${subColor}`,
-                color: subColor,
-              }}
-              data-ocid="sponsors.final.secondary_button"
-            >
-              Download One-Pager
-              <Badge
-                className="ml-1 text-[10px]"
-                style={{ background: "oklch(0.30 0.06 290)", color: subColor }}
-              >
-                Coming Soon
-              </Badge>
-            </Button>
+      {/* SECTION 4 — ENGAGEMENT DEPTH */}
+      <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
+        <motion.div {...fadeUp} className="flex flex-col gap-10">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-4xl md:text-5xl font-bold text-white">
+              Users don't scroll. They participate.
+            </h2>
+            <p className="text-white/50 text-lg">
+              This creates multiple engagement events per session — not a single
+              impression.
+            </p>
           </div>
 
-          <p
-            className="mt-8 text-xs"
-            style={{
-              color: isDark ? "oklch(0.45 0.07 290)" : "oklch(0.50 0.07 290)",
-            }}
-          >
-            All inquiries answered within 24 hours. No agencies. Direct founder
-            contact.
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: <BookOpen className="w-6 h-6 text-yellow-400" />,
+                title: "Lesson → Quiz Loops",
+                body: "Every lesson ends with a quiz. Every quiz awards Bear Points. Users return daily to maintain streaks and unlock the next level. That's 4–8 engagement events per session, minimum.",
+              },
+              {
+                icon: <Zap className="w-6 h-6 text-yellow-400" />,
+                title: "Streak & Reward System",
+                body: "Users build daily streaks. Missed days break streaks. This creates urgency to return — and repeat exposure to everything on the platform, including your brand.",
+              },
+              {
+                icon: <Trophy className="w-6 h-6 text-yellow-400" />,
+                title: "Leaderboard Competition",
+                body: "Monthly leaderboard resets create fresh competition every 30 days. Users grind harder at the end of each cycle. Top 5 earn real USDC rewards. Competition is a retention engine.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-3"
+              >
+                {card.icon}
+                <h3 className="text-lg font-bold text-white">{card.title}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-6 py-5">
+            <p className="text-white/70 text-sm md:text-base leading-relaxed">
+              Most ad platforms give you one shot. Here, a single sponsor
+              placement can be seen{" "}
+              <span className="text-yellow-400 font-semibold">
+                4–8 times per user session
+              </span>
+              , across multiple sessions.
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 5 — VIRAL ENGINE */}
+      <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
+        <motion.div {...fadeUp} className="flex flex-col gap-10">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-4xl md:text-5xl font-bold text-white">
+              Built-in growth loops. No ad spend required.
+            </h2>
+            <p className="text-white/50 text-lg max-w-2xl">
+              Users are not just learners. They are distribution channels.
+              Sharing is built into the system at every major achievement point.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: <Key className="w-6 h-6 text-yellow-400" />,
+                title: "Coherence Key Discoveries",
+                body: "Users share their Coherence Key unlocks on X, LinkedIn, and Facebook. Each share carries the JackBear.ai brand — and your sponsorship — into new audiences organically.",
+              },
+              {
+                icon: <Award className="w-6 h-6 text-yellow-400" />,
+                title: "Intelligence Certifications",
+                body: "Completing the Verifiable Intelligence Layer earns a shareable certificate. Users post these publicly. Every post is a proof-of-engagement signal that new users respond to.",
+              },
+              {
+                icon: <BarChart3 className="w-6 h-6 text-yellow-400" />,
+                title: "Leaderboard Rankings",
+                body: "Monthly leaderboard share cards drive organic competition posts. Top users broadcast their rank. Mid-tier users chase them. The loop reinforces itself every cycle.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-3"
+              >
+                {card.icon}
+                <h3 className="text-lg font-bold text-white">{card.title}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-2xl md:text-3xl font-bold text-yellow-400 italic">
+            &quot;Your brand moves with the user.&quot;
           </p>
         </motion.div>
       </section>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer
-        className="border-t px-6 py-8 text-center text-xs"
-        style={{
-          borderColor: cardBorder,
-          color: isDark ? "oklch(0.40 0.06 290)" : "oklch(0.55 0.06 290)",
-        }}
-      >
-        © {new Date().getFullYear()}. Built with love using{" "}
-        <a
-          href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: violet }}
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 6 — PERFORMANCE / VALUE */}
+      <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
+        <motion.div {...fadeUp} className="flex flex-col gap-10">
+          <h2 className="text-4xl md:text-5xl font-bold text-white">
+            What your placement actually buys.
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: <Globe className="w-7 h-7 text-yellow-400" />,
+                label: "Reach",
+                desc: "Estimated monthly learner sessions based on current platform activity.",
+                figure: lb
+                  ? `${(lb * 3).toLocaleString()} learners/mo`
+                  : "Growing",
+              },
+              {
+                icon: <Activity className="w-7 h-7 text-yellow-400" />,
+                label: "Engagement",
+                desc: "Qualified touches per sponsor placement — users who complete actions, not just load a page.",
+                figure: lb
+                  ? `${(lb * 8).toLocaleString()} impressions/mo`
+                  : "Growing",
+              },
+              {
+                icon: <TrendingUp className="w-7 h-7 text-yellow-400" />,
+                label: "Conversion",
+                desc: "Active users who reach sponsor-adjacent content (lessons, quizzes, leaderboard surfaces).",
+                figure: lb
+                  ? `${(lb * 20).toLocaleString()}+ touches/mo`
+                  : "Growing",
+              },
+            ].map((col) => (
+              <div
+                key={col.label}
+                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4"
+              >
+                {col.icon}
+                <h3 className="text-xl font-bold text-white">{col.label}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  {col.desc}
+                </p>
+                <div className="mt-auto rounded-lg border border-yellow-400/20 bg-yellow-400/5 px-4 py-2">
+                  <span className="text-yellow-400 font-bold text-sm">
+                    {col.figure}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-6 py-5">
+            <p className="text-white/70 text-base leading-relaxed text-center">
+              &quot;This is not banner advertising. This is{" "}
+              <span className="text-yellow-400 font-semibold">
+                context-native placement inside active behavior
+              </span>
+              . &quot;
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 7 — SPONSOR PACKAGES */}
+      <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
+        <motion.div {...fadeUp} className="flex flex-col gap-10">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-white">
+              Three ways to own the attention.
+            </h2>
+            <p className="text-white/60 text-lg max-w-3xl">
+              You're not buying current reach. You're positioning inside a
+              system that is scaling. Early partners lock in pricing before this
+              becomes competitive.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <PackageCard
+              tier="STARTER"
+              tagline="Entry visibility"
+              price="Starting at $500/mo"
+              features={[
+                "Logo placement on sponsor wall",
+                "Mention in weekly platform newsletter",
+                "Visibility during lesson unlock screens",
+                "Monthly performance report",
+              ]}
+              reach={`${reachStarter > 0 ? `${reachStarter.toLocaleString()}+ learner` : "Growing"} sessions/mo (estimated)`}
+              ctaSubject="Starter Partnership"
+              note="Lock in early partner pricing"
+            />
+            <PackageCard
+              tier="GROWTH"
+              tagline="Repeated exposure across sessions"
+              price="Starting at $2,000/mo"
+              features={[
+                "All Starter features",
+                "Featured placement inside active quiz flows",
+                "Dashboard banner visibility",
+                "Bi-weekly performance report",
+                "Leaderboard co-branding",
+              ]}
+              reach={`${reachGrowth > 0 ? `${reachGrowth.toLocaleString()}+ platform` : "Growing"} impressions/mo (estimated)`}
+              ctaSubject="Growth Partnership"
+              note="Best ROI at current platform scale"
+              highlighted
+            />
+            <PackageCard
+              tier="DOMINANCE"
+              tagline="Platform-level integration"
+              price="Custom pricing"
+              features={[
+                "All Growth features",
+                "Category-exclusive placement",
+                "Native content integration (lessons + quizzes)",
+                "Weekly performance report",
+                "Dedicated campaign manager",
+              ]}
+              reach={`${reachDominance > 0 ? `${reachDominance.toLocaleString()}+ qualified` : "Growing"} touches/mo (estimated)`}
+              ctaSubject="Dominance Partnership"
+              note="Limited availability"
+            />
+          </div>
+
+          <p className="text-white/40 text-sm italic text-center">
+            Pricing is set for early-stage scale. It will increase as the
+            platform grows. Partners who move now lock in current rates
+            permanently.
+          </p>
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 8 — ENTERPRISE TIER */}
+      <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
+        <motion.div {...fadeUp}>
+          <EnterpriseCard />
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 9 — TRUST LAYER */}
+      <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
+        <motion.div {...fadeUp} className="flex flex-col gap-10">
+          <h2 className="text-4xl md:text-5xl font-bold text-white">
+            Live data. No screenshots. No theater.
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: <Shield className="w-6 h-6 text-yellow-400" />,
+                title: "On-Chain Verified",
+                body: "JackBear.ai runs on the Internet Computer Protocol (ICP). All user activity is authenticated and verifiable on-chain. No inflated numbers. No vanity metrics.",
+              },
+              {
+                icon: <Lock className="w-6 h-6 text-yellow-400" />,
+                title: "Authenticated Behavior Only",
+                body: "Every metric on this page reflects a real user who logged in and took action. We don't count page loads. We count completions.",
+              },
+              {
+                icon: <Activity className="w-6 h-6 text-yellow-400" />,
+                title: "Live Infrastructure",
+                body: "The numbers above update every 30 seconds from a live backend. If you refresh this page, the numbers change. That's the point.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-3"
+              >
+                {card.icon}
+                <h3 className="text-lg font-bold text-white">{card.title}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge className="flex items-center gap-1.5 border border-white/10 bg-white/5 text-white/70 px-3 py-1.5">
+              <Globe className="w-3 h-3" /> ICP Blockchain
+            </Badge>
+            <Badge className="flex items-center gap-1.5 border border-white/10 bg-white/5 text-white/70 px-3 py-1.5">
+              <Users className="w-3 h-3" /> Real Users Only
+            </Badge>
+            <Badge className="flex items-center gap-1.5 border border-white/10 bg-white/5 text-white/70 px-3 py-1.5">
+              <CheckCircle className="w-3 h-3" /> No Vanity Metrics
+            </Badge>
+          </div>
+
+          <p className="text-2xl md:text-3xl font-bold text-white">
+            &quot;If it's not measurable, it doesn't exist here.&quot;
+          </p>
+        </motion.div>
+      </section>
+
+      <Separator className="bg-white/5" />
+
+      {/* SECTION 10 — FINAL CTA */}
+      <section className="relative px-4 py-24 md:py-32 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-yellow-400/5 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_100%,rgba(250,204,21,0.07),transparent)]" />
+
+        <motion.div
+          {...fadeUp}
+          className="flex flex-col items-center text-center gap-8 max-w-3xl mx-auto"
         >
-          caffeine.ai
-        </a>
+          <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+            Own attention before it gets expensive.
+          </h2>
+
+          <p className="text-white/60 text-lg leading-relaxed">
+            Web3 education is growing fast. JackBear.ai is already the
+            infrastructure. Early sponsors get locked-in pricing, preferred
+            placement, and direct access to a community that will only become
+            harder and more expensive to reach.
+          </p>
+
+          <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-6 py-4 max-w-xl">
+            <p className="text-white/60 text-sm leading-relaxed">
+              Pricing increases as the platform scales. Partners who move now
+              lock in current rates permanently.{" "}
+              <span className="text-yellow-400 font-semibold">
+                This window closes.
+              </span>
+            </p>
+          </div>
+
+          <a
+            href="mailto:sponsors@jackbear.ai?subject=Partnership%20Application"
+            data-ocid="sponsors.apply_final.primary_button"
+          >
+            <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-10 py-4 text-lg">
+              Apply for Partnership <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </a>
+
+          <p className="text-white/40 text-sm">
+            Direct founder access. No agencies. Replied within 24 hours.
+          </p>
+
+          <p className="text-xl md:text-2xl text-yellow-400 font-bold italic">
+            &quot;This is not a media kit. This is a live revenue machine.&quot;
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 px-4 py-8 text-center">
+        <p className="text-white/30 text-sm">
+          © {new Date().getFullYear()}. Built with love using{" "}
+          <a
+            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-white/50 transition-colors"
+          >
+            caffeine.ai
+          </a>
+        </p>
       </footer>
     </div>
   );
