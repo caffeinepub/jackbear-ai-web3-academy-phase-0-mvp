@@ -115,7 +115,7 @@ export default function Footer() {
                   to="/impact"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Impact & Scholarships
+                  Impact &amp; Scholarships
                 </Link>
               </li>
               <li>
@@ -124,6 +124,14 @@ export default function Footer() {
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Monthly Prize
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/missions"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  ChainKey Missions
                 </Link>
               </li>
               <li>

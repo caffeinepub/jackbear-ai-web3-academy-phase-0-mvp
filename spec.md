@@ -1,37 +1,63 @@
-# JackBear.ai — Sponsor Media Kit System
+# JackBear.ai — Missions Phases + Approval + Reward Display Patch
 
 ## Current State
 
-- `/admin/stats` route exists, gated to admin allowlist, powered by `getAdminAnalytics()` backend query returning `AdminAnalytics` (totalRegisteredUsers, dailyActiveUsers, monthlyActiveUsers, totalLessonCompletions, totalQuizPasses, totalBPAwarded, usersWithBP)
-- `getPublicMetrics()` backend method also exists returning `{ activeLearnersToday, mostCompletedLessonWeekly, averageProgress }` — available to anonymous callers
-- `getGlobalLeaderboard()` and `getMonthlyLeaderboard()` return `BPLeaderboardEntry[]`
-- App uses React + TanStack Router + Tailwind OKLCH design system, dark-mode premium aesthetic
-- No `/sponsors` route exists yet
+`MissionsPage.tsx` is a self-contained, frontend-only MVP at `/missions`. It uses local React state with seed data. The `Mission` type has:
+- `status: "Open" | "Closing Soon" | "Closed"`
+- No phase field
+- No reward structure field
+- No payout status field
+- Post form creates missions as `status: "Open"` immediately — no approval gate
+- Submission form has fixed fields (name, link, explanation) — not phase-aware
+- No admin approval toggle
+- No trust copy about selection process
 
 ## Requested Changes (Diff)
 
 ### Add
-- `src/frontend/src/pages/SponsorsPage.tsx` — full sponsors media kit page at `/sponsors`
-- Route registered in `App.tsx` at path `/sponsors`
-- Page pulls live data from `getPublicMetrics()` (anonymous, no login needed) for public stats strip
-- Auto-polls every 30 seconds with animated counter transitions
-- 9 sections: Hero, Live Metrics Strip, Engagement Depth, Viral Engine, Performance Visuals (charts using recharts already available), Sponsor Value Block, Sponsor Packages (3 tiers), Trust Layer, Final CTA
-- Sponsor tier cards with "Request Access" CTAs linking to mailto or external form
-- No login required — page is fully public
-- "Live" pulsing indicator on metrics
+- `MissionPhase` type: `"entry" | "shortlist" | "finalist" | "winner_selected"`
+- `MissionStatus` expanded: `"draft" | "pending_approval" | "open" | "closed"` (replacing old `"Open" | "Closing Soon" | "Closed"`)
+- `PayoutStatus` type: `"pending" | "awarded" | "paid"`
+- `rewardStructure: string` field on `Mission` — flexible text description of reward split
+- `payoutStatus: PayoutStatus` field on `Mission`
+- `phase: MissionPhase` field on `Mission`
+- Phase badge component showing current phase with color
+- Payout status badge component
+- Mission card: show phase badge + reward summary + payout status if closed
+- Mission detail modal: phase + reward structure + payout status + "How this mission works" phase stepper (Entry → Shortlist → Finalist → Winner)
+- Phase explanation block in detail modal
+- Phase-aware submission form (different fields for entry vs shortlist/finalist)
+- Post mission form creates missions as `status: "pending_approval"`, not visible in public feed
+- Post success message: "Mission submitted for review. It will go live once approved."
+- Admin approval toggle (missions-only, isolated): admin can flip `pending_approval` → `open`
+- Business trust copy block: "Businesses do not choose blindly. They review shortlisted and finalist solutions before selecting a winner."
+- Seed missions updated with `phase`, `rewardStructure`, `payoutStatus` fields
+- Public feed filter: only show `status === "open" || status === "closed"` missions
 
 ### Modify
-- `src/frontend/src/App.tsx` — add sponsorsRoute import and route registration
+- `Mission` interface: extend with new fields
+- `MissionStatus` type: expand from 3-value to 4-value
+- `StatusBadge`: handle `pending_approval` and `draft` (show nothing or internal badge)
+- `MissionCard`: add phase + reward summary + payout status display
+- Mission detail modal: add new sections (phase stepper, reward structure, payout, trust copy)
+- Submit form: conditional fields based on mission phase
+- Post form: change created status from `"Open"` to `"pending_approval"`
+- Stats bar: count only `open`/`closed` missions for public display
+- Seed missions: add new required fields
 
 ### Remove
-- Nothing
+- Old `MissionStatus` values `"Closing Soon"` as a separate type — replace with `open` + a time-based check for display
+- Mission feed showing `pending_approval` or `draft` missions
 
 ## Implementation Plan
 
-1. Create `SponsorsPage.tsx` with all 9 sections using existing OKLCH design tokens and card primitives
-2. Use `useActor()` to call `getPublicMetrics()` for the live metrics strip (anonymous-safe)
-3. Auto-refresh via `setInterval` every 30s with animated number transitions using framer-motion (already imported via `motion/react`)
-4. Charts: simple inline SVG/CSS bar charts and line sketches — no new chart lib needed, keeping bundle lean
-5. Sponsor tiers: 3 cards (Starter / Growth / Dominance) with feature lists and estimated reach derived from live user count
-6. Register route in App.tsx
-7. Validate and deploy
+1. Expand `Mission` interface with `phase`, `rewardStructure`, `payoutStatus`, expanded `status`
+2. Update seed data with new fields — map existing Open/Closed to new `open`/`closed`, set phases and reward structures
+3. Update `StatusBadge` and add `PhaseBadge`, `PayoutBadge` components
+4. Update `MissionCard` to display phase + reward summary + payout if closed
+5. Update public feed filter: only `open` or `closed` missions visible
+6. Update post form: new missions created as `pending_approval`; show approval-pending success message
+7. Add missions-only admin approval toggle (isolated state, gated by admin principal constant)
+8. Update mission detail modal: add phase stepper, reward structure section, payout status, phase explanation, trust copy
+9. Update submission form: conditional fields based on current mission phase (entry vs shortlist/finalist)
+10. Validate build

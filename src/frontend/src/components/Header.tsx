@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   Sparkles,
   Sun,
+  Target,
   Video,
   X,
   Zap,
@@ -192,6 +193,18 @@ export default function Header() {
             Intelligence
           </Link>
 
+          {/* Primary: Missions */}
+          <Link
+            to="/missions"
+            data-ocid="missions.link"
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
+              isActive("/missions") ? "text-primary" : "text-foreground/80"
+            }`}
+          >
+            <Target className="h-3.5 w-3.5" />
+            Missions
+          </Link>
+
           {/* More dropdown: ICPEDIA group + existing items */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -332,6 +345,17 @@ export default function Header() {
             >
               <Brain className="h-4 w-4 text-violet-400" />
               Intelligence
+            </Link>
+
+            {/* Missions link in mobile */}
+            <Link
+              to="/missions"
+              data-ocid="missions.link"
+              className="flex items-center gap-2 py-2 text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+              onClick={closeMobileMenu}
+            >
+              <Target className="h-4 w-4 text-amber-400" />
+              Missions
             </Link>
 
             {/* Games section in mobile */}

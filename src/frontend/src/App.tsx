@@ -46,6 +46,7 @@ import ImpactPage from "./pages/ImpactPage";
 // Pages
 import LandingPage from "./pages/LandingPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import MissionsPage from "./pages/MissionsPage";
 import MonthlyPrizePage from "./pages/MonthlyPrizePage";
 import NewsPage from "./pages/NewsPage";
 import RealTimeICPFeedPage from "./pages/RealTimeICPFeedPage";
@@ -287,6 +288,12 @@ const sponsorsRoute = createRoute({
   component: SponsorsPage,
 });
 
+const missionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/missions",
+  component: MissionsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   coursesRoute,
@@ -322,6 +329,7 @@ const routeTree = rootRoute.addChildren([
   intelligenceRoute,
   verifyRoute,
   sponsorsRoute,
+  missionsRoute,
   verifyTokenRoute,
 ]);
 
