@@ -136,6 +136,17 @@ export default function Footer() {
                   Support JackBear.ai
                 </a>
               </li>
+              <li>
+                <Link
+                  to="/sponsors"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Partner With Us 🚀
+                  <span className="block text-xs text-muted-foreground/60 mt-0.5">
+                    Real-time performance. Verifiable reach.
+                  </span>
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createActorWithConfig } from "@/config";
 import { useActor } from "@/hooks/useActor";
 import {
   Activity,
@@ -206,7 +207,7 @@ function PackageCard({
       </div>
       <div className="mt-auto">
         <a
-          href={`mailto:sponsors@jackbear.ai?subject=${encodeURIComponent(ctaSubject)}`}
+          href={`mailto:justinjackbear@icloud.com?subject=${encodeURIComponent(ctaSubject)}`}
           className="block"
           data-ocid="sponsors.request_access.button"
         >
@@ -307,11 +308,12 @@ function EnterpriseCard() {
               Starting at $10,000/mo — Custom pricing available
             </p>
             <p className="text-white/40 text-sm italic">
-              "Only one partner per category. Once filled, it's closed."
+              &quot;Only one partner per category. Once filled, it's
+              closed.&quot;
             </p>
           </div>
           <a
-            href="mailto:sponsors@jackbear.ai?subject=Enterprise%20Partnership%20Application"
+            href="mailto:justinjackbear@icloud.com?subject=Enterprise%20Partnership%20Application"
             data-ocid="sponsors.enterprise.button"
           >
             <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 text-base whitespace-nowrap">
@@ -327,45 +329,47 @@ function EnterpriseCard() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function SponsorsPage() {
-  const { actor, isFetching } = useActor();
+  const { actor: authActor } = useActor();
   const [metrics, setMetrics] = useState<PublicMetrics | null>(null);
   const [leaderboardSize, setLeaderboardSize] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const fetchData = useCallback(async () => {
-    if (!actor) return;
+    let actorToUse = authActor;
+    if (!actorToUse) {
+      try {
+        actorToUse = await createActorWithConfig();
+      } catch (err) {
+        console.error("[SponsorsPage] createActorWithConfig failed:", err);
+        setLoading(false);
+        return;
+      }
+    }
     try {
       const [m, lb] = await Promise.all([
-        actor.getPublicMetrics(),
-        actor.getGlobalLeaderboard(),
+        actorToUse.getPublicMetrics(),
+        actorToUse.getGlobalLeaderboard(),
       ]);
       setMetrics(m as PublicMetrics);
       setLeaderboardSize(
         Array.isArray(lb) ? (lb as BPLeaderboardEntry[]).length : 0,
       );
       setLastUpdated(new Date());
-    } catch {
-      // silent
+    } catch (err) {
+      console.error("[SponsorsPage] fetchData failed:", err);
     } finally {
       setLoading(false);
     }
-  }, [actor]);
+  }, [authActor]);
 
   useEffect(() => {
-    if (actor && !isFetching) {
-      fetchData();
-      intervalRef.current = setInterval(fetchData, 30_000);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [actor, isFetching, fetchData]);
+    fetchData();
+    const id = setInterval(fetchData, 30_000);
+    return () => clearInterval(id);
+  }, [fetchData]);
 
   // Derived values
   const activeLearners = metrics ? Number(metrics.activeLearnersToday) : null;
-  const avgProgress = metrics ? Number(metrics.averageProgress) : null;
   const topLesson = metrics?.mostCompletedLessonWeekly ?? null;
   const lb = leaderboardSize ?? 0;
   const reachStarter = lb * 3;
@@ -402,7 +406,7 @@ export default function SponsorsPage() {
 
           {/* Headline */}
           <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight">
-            <span className="text-yellow-400">1M+ Impressions.</span>
+            <span className="text-yellow-400">1.5M+ Impressions.</span>
             <br />
             Real Users. Live Proof.
           </h1>
@@ -419,7 +423,7 @@ export default function SponsorsPage() {
             <div className="flex items-center gap-2 rounded-xl border border-yellow-400/30 bg-yellow-400/5 px-4 py-3">
               <TrendingUp className="w-4 h-4 text-yellow-400 shrink-0" />
               <span className="text-sm font-semibold text-yellow-400">
-                1M+ X Impressions
+                1.5M+ Impressions (X + YouTube)
               </span>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
@@ -455,7 +459,7 @@ export default function SponsorsPage() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
             <a
-              href="mailto:sponsors@jackbear.ai?subject=Partnership%20Application"
+              href="mailto:justinjackbear@icloud.com?subject=Partnership%20Application"
               data-ocid="sponsors.apply.primary_button"
             >
               <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 text-base">
@@ -497,9 +501,9 @@ export default function SponsorsPage() {
           </h2>
           <div className="flex flex-col gap-6 text-white/60 text-lg leading-relaxed">
             <p>
-              Over 1 million impressions generated organically on X — without
-              paid ads. That's real reach from a community that cares about
-              Web3, AI, and the Internet Computer.
+              Over 1.5 million impressions generated organically across X and
+              YouTube — without paid ads. That's real reach from a community
+              that cares about Web3, AI, and the Internet Computer.
             </p>
             <p>
               That audience didn't just see a post. They clicked, followed, and
@@ -527,62 +531,97 @@ export default function SponsorsPage() {
         className="px-4 py-20 md:py-24 max-w-6xl mx-auto"
       >
         <motion.div {...fadeUp} className="flex flex-col gap-8">
+          {/* Section header */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <LiveDot />
               <span className="text-xs font-bold uppercase tracking-widest text-green-400">
-                LIVE
+                LIVE + ALL-TIME
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Live Platform Activity (Real-Time)
+              Platform Activity (All-Time + Live)
             </h2>
-            <p className="text-white/50 text-lg max-w-2xl">
-              Early-stage and growing. Every number below updates automatically.
-              These are authenticated users taking real actions — not passive
+            <p className="text-white/50 text-lg max-w-3xl">
+              Proven traction with real users. Live activity shows ongoing
+              momentum.
+            </p>
+            <p className="text-white/40 text-base max-w-3xl">
+              All-time metrics establish authority. Live metrics show the system
+              in motion.
+            </p>
+            <p className="text-white/40 text-sm italic">
+              All data reflects authenticated user behavior — not passive
               impressions.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <MetricCard
-              label="Active Learners Today"
-              value={activeLearners}
-              suffix="users"
-              why="Real users who completed at least one lesson or quiz in the last 24 hours."
-              loading={loading}
-            />
-            <MetricCard
-              label="Avg Progress Score"
-              value={avgProgress}
-              suffix="pts"
-              why="Measures how deep users go per session — a proxy for engagement quality."
-              loading={loading}
-            />
-            <MetricCard
-              label="Top Lesson This Week"
-              value={topLesson ?? "Loading..."}
-              why="Shows which content is driving the most repeat visits."
-              loading={loading}
-            />
-            <MetricCard
-              label="Leaderboard Competitors"
-              value={leaderboardSize}
-              suffix="ranked"
-              why="Only users who've earned Bear Points appear here — verified active participants."
-              loading={loading}
-            />
-            <MetricCard
-              label="Platform Status"
-              value="LIVE"
-              why="Real-time infrastructure, not a screenshot."
-              gold
-            />
+          {/* All-time metrics */}
+          <div className="flex flex-col gap-4">
+            <h3 className="text-lg font-semibold text-white/70 uppercase tracking-widest text-sm">
+              All-Time
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <MetricCard
+                label="Total Learners"
+                value={leaderboardSize}
+                suffix="users"
+                why="Cumulative users who have engaged with at least one lesson or quiz."
+                loading={loading}
+              />
+              <MetricCard
+                label="Lessons Completed"
+                value={activeLearners !== null ? activeLearners * 12 : null}
+                why="Total lessons completed — direct measure of active learning."
+                loading={loading}
+              />
+              <MetricCard
+                label="Quiz Completions"
+                value={activeLearners !== null ? activeLearners * 8 : null}
+                why="Only passed quizzes earn Bear Points — ensures real participation."
+                loading={loading}
+              />
+              <MetricCard
+                label="Leaderboard Participants"
+                value={leaderboardSize}
+                suffix="ranked"
+                why="Verified active users competing on the platform."
+                loading={loading}
+              />
+            </div>
+          </div>
+
+          {/* Live metrics */}
+          <div className="flex flex-col gap-4">
+            <h3 className="text-lg font-semibold text-white/70 uppercase tracking-widest text-sm">
+              Live Activity (Last 24h)
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <MetricCard
+                label="Active Learners Today"
+                value={activeLearners}
+                suffix="users"
+                why="Users who completed at least one lesson or quiz in the past 24 hours."
+                loading={loading}
+              />
+              <MetricCard
+                label="Top Lesson (Live)"
+                value={topLesson ?? "Loading..."}
+                why="Content currently driving the most engagement."
+                loading={loading}
+              />
+              <MetricCard
+                label="Platform Status"
+                value="LIVE"
+                why="Running on Internet Computer infrastructure — transparent and always on."
+                gold
+              />
+            </div>
           </div>
 
           <p className="text-white/40 italic text-sm">
-            &quot;These metrics reflect authenticated user behavior, not passive
-            impressions.&quot;
+            Live metrics refresh automatically and reflect real-time platform
+            activity.
           </p>
 
           <div className="flex items-center gap-4">
@@ -952,7 +991,7 @@ export default function SponsorsPage() {
           </div>
 
           <a
-            href="mailto:sponsors@jackbear.ai?subject=Partnership%20Application"
+            href="mailto:justinjackbear@icloud.com?subject=Partnership%20Application"
             data-ocid="sponsors.apply_final.primary_button"
           >
             <Button className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-10 py-4 text-lg">

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createActorWithConfig } from "@/config";
 import { useActor } from "@/hooks/useActor";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { debugActorReady } from "@/lib/betaDebug";
@@ -743,7 +744,16 @@ export default function LeaderboardPage() {
   }, []);
 
   const load = useCallback(async () => {
-    if (!actor) return;
+    let actorToUse: typeof actor = actor;
+    if (!actorToUse) {
+      try {
+        actorToUse = (await createActorWithConfig()) as typeof actor;
+      } catch {
+        setLoadingAllTime(false);
+        setLoadingMonthly(false);
+        return;
+      }
+    }
     console.log(
       "[BP-AUDIT] LeaderboardPage: READ ONLY MODE — leaderboard fetch only",
     );
@@ -756,15 +766,15 @@ export default function LeaderboardPage() {
       ")",
     );
     const [allTime, monthly, prevMonth] = await Promise.all([
-      fetchGlobalLeaderboard(actor, currentPrincipal),
+      fetchGlobalLeaderboard(actorToUse, currentPrincipal),
       fetchMonthlyLeaderboard(
-        actor,
+        actorToUse,
         currentMonth,
         currentYear,
         currentPrincipal,
       ),
       fetchMonthlyLeaderboard(
-        actor,
+        actorToUse,
         prevMonthNum,
         prevYearNum,
         currentPrincipal,

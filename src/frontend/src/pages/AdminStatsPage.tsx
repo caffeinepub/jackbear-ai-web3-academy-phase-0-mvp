@@ -81,6 +81,11 @@ export default function AdminStatsPage() {
     }
     if (!actor) return;
 
+    // Safety timeout — clear loading if actor never resolves
+    const loadTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 15000);
+
     async function fetchAll() {
       try {
         setLoading(true);
@@ -105,11 +110,13 @@ export default function AdminStatsPage() {
       } catch (e: any) {
         setError(String(e?.message ?? e));
       } finally {
+        clearTimeout(loadTimeout);
         setLoading(false);
       }
     }
 
     fetchAll();
+    return () => clearTimeout(loadTimeout);
   }, [identity, actor, isAdmin]);
 
   // Not yet authenticated

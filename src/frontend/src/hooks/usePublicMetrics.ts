@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { createActorWithConfig } from "../config";
 import { useActor } from "./useActor";
 
 export interface PublicMetrics {
@@ -8,20 +9,30 @@ export interface PublicMetrics {
 }
 
 export function usePublicMetrics() {
-  const { actor, isFetching: actorFetching } = useActor();
+  // useActor as secondary fallback; primary path uses anonymous actor directly
+  const { actor: authActor } = useActor();
 
   return useQuery<PublicMetrics>({
     queryKey: ["publicMetrics"],
     queryFn: async () => {
-      if (!actor) {
-        return {
-          averageProgress: BigInt(0),
-        };
+      // Always try with a fresh anonymous actor first — no auth dependency
+      let actorToUse = authActor;
+      if (!actorToUse) {
+        try {
+          actorToUse = await createActorWithConfig();
+        } catch {
+          return { averageProgress: BigInt(0) };
+        }
       }
-      return actor.getPublicMetrics();
+      try {
+        return await actorToUse.getPublicMetrics();
+      } catch {
+        return { averageProgress: BigInt(0) };
+      }
     },
-    enabled: !!actor && !actorFetching,
-    retry: 1,
+    // Enable immediately — does not depend on auth actor being ready
+    enabled: true,
+    retry: 2,
     staleTime: 1000 * 60 * 5,
   });
 }
