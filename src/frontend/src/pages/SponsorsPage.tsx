@@ -346,17 +346,28 @@ export default function SponsorsPage() {
       }
     }
     try {
+      console.log(
+        "[SPONSOR-METRICS] SponsorsPage: fetching getPublicMetrics + getGlobalLeaderboard",
+      );
       const [m, lb] = await Promise.all([
         actorToUse.getPublicMetrics(),
         actorToUse.getGlobalLeaderboard(),
       ]);
+      console.log(
+        "[SPONSOR-METRICS] SponsorsPage: getPublicMetrics result:",
+        m,
+      );
+      console.log(
+        "[SPONSOR-METRICS] SponsorsPage: leaderboard rows:",
+        Array.isArray(lb) ? lb.length : "?",
+      );
       setMetrics(m as PublicMetrics);
       setLeaderboardSize(
         Array.isArray(lb) ? (lb as BPLeaderboardEntry[]).length : 0,
       );
       setLastUpdated(new Date());
     } catch (err) {
-      console.error("[SponsorsPage] fetchData failed:", err);
+      console.error("[SPONSOR-METRICS] SponsorsPage: fetchData failed:", err);
     } finally {
       setLoading(false);
     }

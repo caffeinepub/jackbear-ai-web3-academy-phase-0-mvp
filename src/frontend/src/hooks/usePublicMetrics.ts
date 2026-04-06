@@ -15,18 +15,32 @@ export function usePublicMetrics() {
   return useQuery<PublicMetrics>({
     queryKey: ["publicMetrics"],
     queryFn: async () => {
+      console.log("[PUBLIC-READ] usePublicMetrics: fetching getPublicMetrics");
       // Always try with a fresh anonymous actor first — no auth dependency
       let actorToUse = authActor;
       if (!actorToUse) {
         try {
           actorToUse = await createActorWithConfig();
-        } catch {
+          console.log(
+            "[PUBLIC-READ] usePublicMetrics: using fresh anonymous actor",
+          );
+        } catch (e) {
+          console.error(
+            "[PUBLIC-READ] usePublicMetrics: createActorWithConfig failed:",
+            e,
+          );
           return { averageProgress: BigInt(0) };
         }
       }
       try {
-        return await actorToUse.getPublicMetrics();
-      } catch {
+        const result = await actorToUse.getPublicMetrics();
+        console.log("[PUBLIC-READ] usePublicMetrics: result:", result);
+        return result;
+      } catch (e) {
+        console.error(
+          "[PUBLIC-READ] usePublicMetrics: getPublicMetrics failed:",
+          e,
+        );
         return { averageProgress: BigInt(0) };
       }
     },

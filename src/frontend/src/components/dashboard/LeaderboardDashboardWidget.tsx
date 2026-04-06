@@ -2,6 +2,7 @@ import ShareActionsInline from "@/components/ShareActionsInline";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createActorWithConfig } from "@/config";
 import { useActor } from "@/hooks/useActor";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { getMasteryTier } from "@/lib/leaderboardData";
@@ -34,17 +35,33 @@ export default function LeaderboardDashboardWidget() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: identity read inside effect body, not a reactive dep
   useEffect(() => {
-    if (!actor) return;
     let cancelled = false;
     (async () => {
+      // Use authActor if available, otherwise fall back to anonymous actor for public leaderboard reads
+      let actorToUse = actor;
+      if (!actorToUse) {
+        try {
+          actorToUse = await createActorWithConfig();
+          console.log(
+            "[LEADERBOARD-LOAD] LeaderboardDashboardWidget: using anonymous actor fallback",
+          );
+        } catch (e) {
+          console.error(
+            "[LEADERBOARD-LOAD] LeaderboardDashboardWidget: createActorWithConfig failed:",
+            e,
+          );
+          if (!cancelled) setLoading(false);
+          return;
+        }
+      }
       try {
         console.log(
-          "[BP-AUDIT] BACKEND SOURCE OF TRUTH ACTIVE — LeaderboardDashboardWidget using backend BP only",
+          "[LEADERBOARD-LOAD] LeaderboardDashboardWidget: fetching BP and leaderboard",
         );
         const principal = identity?.getPrincipal().toString() ?? "";
         const [creditsOpt, leaderboardRaw] = await Promise.all([
-          actor.getBearCredits(),
-          actor.getGlobalLeaderboard(),
+          actorToUse.getBearCredits(),
+          actorToUse.getGlobalLeaderboard(),
         ]);
         if (!cancelled) {
           // BP

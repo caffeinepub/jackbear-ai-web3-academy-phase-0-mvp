@@ -10,6 +10,7 @@ import type {
   SubmitQuizArgs,
   UserProfile,
 } from "../backend";
+import { createActorWithConfig } from "../config";
 import { useActor } from "./useActor";
 
 // ─── localStorage helpers ────────────────────────────────────────────────────
@@ -333,8 +334,18 @@ export function useGetBearCredits() {
   return useQuery<BearCredits | null>({
     queryKey: ["bearCredits"],
     queryFn: async () => {
-      if (!actor) return null;
-      return actor.getBearCredits();
+      if (!actor) {
+        console.log("[DASHBOARD-STATS] useGetBearCredits: actor not ready");
+        return null;
+      }
+      try {
+        const result = await actor.getBearCredits();
+        console.log("[DASHBOARD-STATS] getBearCredits result:", result);
+        return result;
+      } catch (e) {
+        console.error("[DASHBOARD-STATS] getBearCredits failed:", e);
+        return null;
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -382,8 +393,18 @@ export function useMyDailyStats() {
   return useQuery({
     queryKey: ["myDailyStats"],
     queryFn: async () => {
-      if (!actor) return null;
-      return await actor.getMyDailyStats();
+      if (!actor) {
+        console.log("[DASHBOARD-STATS] useMyDailyStats: actor not ready");
+        return null;
+      }
+      try {
+        const result = await actor.getMyDailyStats();
+        console.log("[DASHBOARD-STATS] getMyDailyStats result:", result);
+        return result;
+      } catch (e) {
+        console.error("[DASHBOARD-STATS] getMyDailyStats failed:", e);
+        return null;
+      }
     },
     enabled: !!actor,
     staleTime: 30_000,
@@ -561,37 +582,63 @@ export function useCompleteQuest() {
 }
 
 export function useGetAnalyticsStats() {
-  const { actor, isFetching } = useActor();
+  const { actor: authActor } = useActor();
 
   return useQuery<AnalyticsStats | null>({
     queryKey: ["analyticsStats"],
     queryFn: async () => {
-      if (!actor) return null;
+      console.log("[DASHBOARD-STATS] useGetAnalyticsStats: fetching");
+      let actorToUse = authActor;
+      if (!actorToUse) {
+        try {
+          actorToUse = await createActorWithConfig();
+        } catch (e) {
+          console.error("[DASHBOARD-STATS] createActorWithConfig failed:", e);
+          return null;
+        }
+      }
       try {
-        return await actor.getAnalyticsStats();
-      } catch {
+        const result = await actorToUse.getAnalyticsStats();
+        console.log("[DASHBOARD-STATS] getAnalyticsStats result:", result);
+        return result;
+      } catch (e) {
+        console.error("[DASHBOARD-STATS] getAnalyticsStats failed:", e);
         return null;
       }
     },
-    enabled: !!actor && !isFetching,
+    // Enable immediately — public read, no auth required
+    enabled: true,
     staleTime: 60_000,
   });
 }
 
 export function useGetPublicMetrics() {
-  const { actor, isFetching } = useActor();
+  const { actor: authActor } = useActor();
 
   return useQuery({
     queryKey: ["publicMetrics"],
     queryFn: async () => {
-      if (!actor) return null;
+      console.log("[PUBLIC-READ] useGetPublicMetrics: fetching");
+      let actorToUse = authActor;
+      if (!actorToUse) {
+        try {
+          actorToUse = await createActorWithConfig();
+        } catch (e) {
+          console.error("[PUBLIC-READ] createActorWithConfig failed:", e);
+          return null;
+        }
+      }
       try {
-        return await actor.getPublicMetrics();
-      } catch {
+        const result = await actorToUse.getPublicMetrics();
+        console.log("[PUBLIC-READ] getPublicMetrics result:", result);
+        return result;
+      } catch (e) {
+        console.error("[PUBLIC-READ] getPublicMetrics failed:", e);
         return null;
       }
     },
-    enabled: !!actor && !isFetching,
+    // Enable immediately — public read, no auth required
+    enabled: true,
     staleTime: 60_000,
   });
 }
