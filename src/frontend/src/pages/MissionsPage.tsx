@@ -9,8 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  type Mission,
+  type MissionStatus,
+  type PayoutStatus,
+  missionsStore,
+  useMissionsStore,
+} from "@/lib/missionsStore";
+import {
   ArrowRight,
   Award,
+  BadgeCheck,
   CheckCircle,
   ChevronRight,
   Clock,
@@ -25,375 +33,237 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
-const _ADMIN_PRINCIPALS = [
-  "3ye7w-6s7gq-k4dpo-icdhj-r7ye2-afylq-eofxv-7p6zw-e7nsd-23fi5-pqe",
-  "mqrud-rxoxo-nbepq-sktaj-q76k5-r67zx-4wcgo-rhqmv-5mwys-3dl7s-zae",
-];
-
-type MissionStatus =
-  | "pending_review"
-  | "pending_funding"
-  | "approved"
-  | "live"
-  | "rejected"
-  | "closed";
-type MissionPhase = "entry" | "shortlist" | "finalist" | "winner_selected";
-type MissionDifficulty = "Beginner" | "Intermediate" | "Advanced";
-type PayoutStatus = "pending" | "awarded" | "paid";
-
-interface Mission {
-  id: string;
-  title: string;
-  company: string;
-  shortDescription: string;
-  fullDescription: string;
-  successCriteria: string;
-  bounty: number;
-  category: string;
-  difficulty: MissionDifficulty;
-  submissionCount: number;
-  deadline: string;
-  status: MissionStatus;
-  submissionInstructions: string;
-  phase: MissionPhase;
-  rewardStructure: string;
-  payoutStatus: PayoutStatus;
-}
-
-const SEED_MISSIONS: Mission[] = [
-  {
-    id: "mission-001",
-    title: "Build a Web3 Onboarding Flow",
-    company: "ChainForge Labs",
-    shortDescription:
-      "Create a frictionless onboarding experience that guides new users from wallet setup to their first on-chain transaction in under 5 steps.",
-    fullDescription:
-      "ChainForge Labs needs a polished Web3 onboarding flow built with Caffeine.ai. The solution must handle wallet detection, identity creation via Internet Identity, and guide the user through their first real interaction with an ICP canister. The flow should be mobile-first, use progressive disclosure, and include clear error recovery paths.",
-    successCriteria:
-      "Complete working prototype deployed on ICP. User can go from zero to first canister interaction in under 5 minutes. Tested on both desktop and mobile. Includes loading states and error handling.",
-    bounty: 500,
-    category: "UI/UX",
-    difficulty: "Intermediate",
-    submissionCount: 4,
-    deadline: "2025-06-15",
-    status: "live",
-    submissionInstructions:
-      "Submit a Caffeine.ai project link with a working demo. Include a short video walkthrough (max 2 minutes). Judges will test on mobile and desktop.",
-    phase: "entry",
-    rewardStructure: "Winner: $500",
-    payoutStatus: "pending",
-  },
-  {
-    id: "mission-002",
-    title: "Create an ICP Glossary Quiz App",
-    company: "DevDAO Network",
-    shortDescription:
-      "Build an interactive quiz app covering 50+ ICP and Web3 terms. Users should score, learn, and share results.",
-    fullDescription:
-      "DevDAO Network wants a standalone quiz application covering the Internet Computer Protocol ecosystem. The app must include at least 50 questions across 5 categories (Architecture, Tokens, DeFi, Governance, Security), show explanations after each answer, maintain a local score, and include a shareable results card.",
-    successCriteria:
-      "50+ questions across 5 categories. Score tracking. Explanation shown after each answer. Shareable results card with score summary. Clean, engaging UI.",
-    bounty: 800,
-    category: "Education",
-    difficulty: "Beginner",
-    submissionCount: 7,
-    deadline: "2025-05-30",
-    status: "live",
-    submissionInstructions:
-      "Deploy via Caffeine.ai and submit the live URL. Include a screenshot of the results card. Must be playable without login.",
-    phase: "shortlist",
-    rewardStructure: "Winner: $600 · Top Submission: $200",
-    payoutStatus: "pending",
-  },
-  {
-    id: "mission-003",
-    title: "Design a DAO Voting Dashboard",
-    company: "NeuronStack",
-    shortDescription:
-      "Build a governance dashboard that visualizes neuron activity, active proposals, and voting history for ICP Network Nervous System.",
-    fullDescription:
-      "NeuronStack requires a comprehensive DAO voting dashboard for the Internet Computer's Network Nervous System. The dashboard must display active proposals with voting status, neuron voting power visualization, historical voting trends, and allow simulated vote submission. Data can be mocked but must be structurally accurate to real NNS proposal shapes.",
-    successCriteria:
-      "Active proposals list with filtering. Neuron voting power chart. Historical vote timeline. Simulated vote action with confirmation. Responsive layout.",
-    bounty: 1500,
-    category: "Governance",
-    difficulty: "Advanced",
-    submissionCount: 3,
-    deadline: "2025-07-01",
-    status: "live",
-    submissionInstructions:
-      "Submit Caffeine.ai project URL with README explaining data model choices. Judges will review code architecture and UI quality equally.",
-    phase: "finalist",
-    rewardStructure: "Winner: $1,000 · Finalist 1: $300 · Finalist 2: $200",
-    payoutStatus: "pending",
-  },
-  {
-    id: "mission-004",
-    title: "Build a Token Swap Interface",
-    company: "AxiomDEX",
-    shortDescription:
-      "Create a DEX swap interface prototype with token selection, price simulation, slippage controls, and transaction confirmation flow.",
-    fullDescription:
-      "AxiomDEX is building the next generation decentralized exchange on ICP and needs a polished swap interface prototype. The UI must include token pair selection from a predefined list, simulated price quotes with price impact calculation, adjustable slippage tolerance, and a multi-step transaction confirmation modal. Full backend integration is not required — mocked data is acceptable.",
-    successCriteria:
-      "Token pair selector with search. Simulated swap quote with price impact. Slippage tolerance control. Confirmation modal with summary. Transaction success/failure states.",
-    bounty: 1200,
-    category: "DeFi",
-    difficulty: "Advanced",
-    submissionCount: 9,
-    deadline: "2025-05-10",
-    status: "live",
-    submissionInstructions:
-      "Submit working Caffeine.ai prototype. Must include at least 5 token pairs. Judge focus: UX clarity and error state handling.",
-    phase: "finalist",
-    rewardStructure: "Winner: $900 · Runner-up: $300",
-    payoutStatus: "pending",
-  },
-  {
-    id: "mission-005",
-    title: "Create a NFT Minting Tool",
-    company: "PixelVault ICP",
-    shortDescription:
-      "Build a drag-and-drop NFT minting tool that lets creators upload artwork, set metadata, and generate a shareable mint page.",
-    fullDescription:
-      "PixelVault ICP needs a creator-friendly NFT minting tool. The solution must allow image upload (with preview), metadata entry (name, description, traits), collection grouping, and generate a shareable mint preview page. Actual on-chain minting is optional — the focus is on the creator experience and metadata structure.",
-    successCriteria:
-      "Image upload with preview. Metadata form (name, description, 3+ traits). Collection grouping. Shareable mint preview page. Export metadata as JSON.",
-    bounty: 600,
-    category: "NFT",
-    difficulty: "Intermediate",
-    submissionCount: 5,
-    deadline: "2025-06-20",
-    status: "live",
-    submissionInstructions:
-      "Submit Caffeine.ai project link. Must demonstrate full flow from upload to preview page. Include example NFT with at least 3 traits.",
-    phase: "entry",
-    rewardStructure: "Winner: $600",
-    payoutStatus: "pending",
-  },
-  {
-    id: "mission-006",
-    title: "Deploy a Canister Status Monitor",
-    company: "ICP Ops Guild",
-    shortDescription:
-      "Build a monitoring dashboard that tracks canister cycles, memory usage, and uptime for a fleet of ICP canisters.",
-    fullDescription:
-      "ICP Ops Guild needs a canister monitoring dashboard for DevOps teams. The tool should display per-canister metrics (cycles balance, memory usage, compute allocation, uptime status), support manual canister ID entry, show trend indicators, and send in-app alerts when cycles fall below a threshold. Data can be simulated for demo purposes.",
-    successCriteria:
-      "Dashboard showing 5+ simulated canisters. Cycles balance with trend. Memory usage bar. Alert threshold configuration. Responsive table and card views.",
-    bounty: 400,
-    category: "DevOps",
-    difficulty: "Beginner",
-    submissionCount: 2,
-    deadline: "2025-04-20",
-    status: "closed",
-    submissionInstructions:
-      "Submit Caffeine.ai project URL. Must show at least 5 simulated canisters with different health states. Winner announced 2 weeks after close.",
-    phase: "winner_selected",
-    rewardStructure: "Winner: $400 (awarded)",
-    payoutStatus: "paid",
-  },
-];
-
+// ─── Helper functions ─────────────────────────────────────────────────────────
 function formatDeadline(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-function getTimeRemaining(dateStr: string): string {
+function getTimeRemaining(deadlineStr: string): string {
   const now = new Date();
-  const deadline = new Date(dateStr);
+  const deadline = new Date(deadlineStr);
   const diff = deadline.getTime() - now.getTime();
   if (diff <= 0) return "Closed";
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   if (days === 0) return "Last day";
   if (days === 1) return "1 day left";
-  return `${days} days left`;
+  if (days < 7) return `${days} days left`;
+  const weeks = Math.floor(days / 7);
+  return weeks === 1 ? "1 week left" : `${weeks} weeks left`;
 }
 
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: MissionStatus }) {
-  if (status === "live") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        Live
-      </span>
-    );
-  }
-  if (status === "pending_review") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-        Pending Review
-      </span>
-    );
-  }
-  if (status === "pending_funding") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-        Pending Funding
-      </span>
-    );
-  }
-  if (status === "approved") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-        Approved
-      </span>
-    );
-  }
-  if (status === "rejected") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-        Rejected
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
-      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
-      Closed
-    </span>
-  );
-}
-
-function PhaseBadge({ phase }: { phase: MissionPhase }) {
-  const config: Record<MissionPhase, { label: string; className: string }> = {
-    entry: {
-      label: "Entry",
-      className: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
+  const config: Partial<
+    Record<MissionStatus, { label: string; className: string; dot: string }>
+  > = {
+    live: {
+      label: "Open",
+      className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      dot: "bg-emerald-400 animate-pulse",
     },
-    shortlist: {
-      label: "Shortlist",
-      className: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+    closed: {
+      label: "Closed",
+      className: "bg-muted text-muted-foreground border-border",
+      dot: "bg-muted-foreground/50",
     },
-    finalist: {
-      label: "Finalist",
-      className: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
+    pending_review: {
+      label: "Pending Review",
+      className: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      dot: "bg-indigo-400",
     },
-    winner_selected: {
-      label: "Winner Selected",
-      className:
-        "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    funded: {
+      label: "Funded",
+      className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      dot: "bg-emerald-400",
     },
   };
-  const { label, className } = config[phase];
+  const c = config[status] ?? {
+    label: status,
+    className: "bg-muted text-muted-foreground border-border",
+    dot: "bg-muted-foreground/50",
+  };
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${className}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${c.className}`}
     >
-      <GitBranch className="h-2.5 w-2.5" />
-      {label}
+      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+      {c.label}
     </span>
   );
 }
 
+// ─── Trust/Funding Badge ──────────────────────────────────────────────────────
+function TrustBadges({ mission }: { mission: Mission }) {
+  const badges: React.ReactNode[] = [];
+
+  if (mission.payoutStatus === "paid") {
+    badges.push(
+      <span
+        key="paid"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"
+      >
+        <CheckCircle className="h-3 w-3" /> Paid
+      </span>,
+    );
+  } else if (mission.fundingStatus === "funded") {
+    badges.push(
+      <span
+        key="verified"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+      >
+        <BadgeCheck className="h-3 w-3" /> Verified Bounty
+      </span>,
+    );
+    if (mission.status === "live" && mission.payoutStatus === "pending") {
+      badges.push(
+        <span
+          key="payout-pending"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+        >
+          <Clock className="h-3 w-3" /> Payout Pending
+        </span>,
+      );
+    }
+  }
+
+  if (badges.length === 0) return null;
+  return <>{badges}</>;
+}
+
+// ─── Payout Badge ─────────────────────────────────────────────────────────────
 function PayoutBadge({ status }: { status: PayoutStatus }) {
-  if (status === "awarded") {
+  if (status === "paid")
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+        <CheckCircle className="h-3 w-3" /> Paid
+      </span>
+    );
+  if (status === "awarded")
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-        <Award className="h-2.5 w-2.5" />
-        Awarded
+        <Award className="h-3 w-3" /> Awarded
       </span>
     );
-  }
-  if (status === "paid") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-        <CheckCircle className="h-2.5 w-2.5" />
-        Paid
-      </span>
-    );
-  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
-      <Clock className="h-2.5 w-2.5" />
-      Payout Pending
+      <Clock className="h-3 w-3" /> Pending
     </span>
   );
 }
 
-function DifficultyDot({ difficulty }: { difficulty: MissionDifficulty }) {
-  const colors: Record<MissionDifficulty, string> = {
-    Beginner: "text-emerald-400",
-    Intermediate: "text-amber-400",
-    Advanced: "text-red-400",
-  };
+// ─── Phase Badge ──────────────────────────────────────────────────────────────
+function PhaseBadge({ phase }: { phase: Mission["phase"] }) {
+  const config: Record<Mission["phase"], { label: string; className: string }> =
+    {
+      entry: {
+        label: "Entry Phase",
+        className: "bg-primary/10 text-primary border-primary/20",
+      },
+      shortlist: {
+        label: "Shortlist",
+        className: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+      },
+      finalist: {
+        label: "Finalist",
+        className: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      },
+      winner_selected: {
+        label: "Winner Selected",
+        className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      },
+    };
+  const c = config[phase];
   return (
-    <span className={`text-xs font-medium ${colors[difficulty]}`}>
-      {difficulty}
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${c.className}`}
+    >
+      <GitBranch className="h-2.5 w-2.5" />
+      {c.label}
     </span>
   );
 }
 
-function PhaseStepperDisplay({ phase }: { phase: MissionPhase }) {
-  const steps: { key: MissionPhase; label: string }[] = [
+// ─── Difficulty dot ───────────────────────────────────────────────────────────
+function DifficultyDot({ difficulty }: { difficulty: Mission["difficulty"] }) {
+  const map: Record<Mission["difficulty"], { color: string; label: string }> = {
+    Beginner: { color: "bg-emerald-400", label: "Beginner" },
+    Intermediate: { color: "bg-amber-400", label: "Intermediate" },
+    Advanced: { color: "bg-red-400", label: "Advanced" },
+  };
+  const d = map[difficulty];
+  return (
+    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+      <span className={`w-2 h-2 rounded-full ${d.color}`} />
+      {d.label}
+    </span>
+  );
+}
+
+// ─── Phase stepper ────────────────────────────────────────────────────────────
+function PhaseStepperDisplay({ phase }: { phase: Mission["phase"] }) {
+  const phases: Array<{ key: Mission["phase"]; label: string }> = [
     { key: "entry", label: "Entry" },
     { key: "shortlist", label: "Shortlist" },
     { key: "finalist", label: "Finalist" },
     { key: "winner_selected", label: "Winner" },
   ];
-  const currentIndex = steps.findIndex((s) => s.key === phase);
-
+  const idx = phases.findIndex((p) => p.key === phase);
   return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {steps.map((step, idx) => (
-        <div key={step.key} className="flex items-center gap-1">
+    <div className="flex items-center gap-1">
+      {phases.map((p, i) => (
+        <>
           <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-              idx === currentIndex
-                ? "bg-primary/15 text-primary border border-primary/30"
-                : idx < currentIndex
-                  ? "bg-muted/60 text-muted-foreground border border-border/40 line-through opacity-60"
-                  : "bg-muted/30 text-muted-foreground/50 border border-border/20"
+            key={p.key}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+              i < idx
+                ? "bg-emerald-500/10 text-emerald-400"
+                : i === idx
+                  ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                  : "bg-muted/50 text-muted-foreground/50"
             }`}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                idx === currentIndex
-                  ? "bg-primary"
-                  : idx < currentIndex
-                    ? "bg-muted-foreground/40"
-                    : "bg-muted-foreground/20"
-              }`}
-            />
-            {step.label}
+            {i < idx && <CheckCircle className="h-2.5 w-2.5" />}
+            {p.label}
           </div>
-          {idx < steps.length - 1 && (
-            <ChevronRight className="h-3 w-3 text-muted-foreground/30 flex-shrink-0" />
+          {i < phases.length - 1 && (
+            <ChevronRight
+              key={`arrow-${p.key}`}
+              className="h-3 w-3 text-muted-foreground/30 flex-shrink-0"
+            />
           )}
-        </div>
+        </>
       ))}
     </div>
   );
 }
 
-function PhaseExplanation({ phase }: { phase: MissionPhase }) {
-  const explanations: Record<MissionPhase, string> = {
+// ─── Phase explanation ────────────────────────────────────────────────────────
+function PhaseExplanation({ phase }: { phase: Mission["phase"] }) {
+  const text: Record<Mission["phase"], string> = {
     entry:
-      "Submit your concept or approach. A solution link is optional at this stage.",
+      "Submit a short concept or approach. An optional solution link is accepted but not required. Best entries advance to the shortlist.",
     shortlist:
-      "Selected participants are submitting improved versions. Include a progress summary and updated link.",
+      "Selected participants develop their solutions further. Submit an updated link + a short progress summary explaining what changed.",
     finalist:
-      "Top solutions are being refined. Finalists submit their best updated build.",
-    winner_selected: "A winner has been selected. See payout status below.",
+      "Top 3–5 solutions refined and submitted. Submit your final build with an updated link and explanation of improvements.",
+    winner_selected:
+      "A winner has been selected. Payout is being processed. Thank you to all participants.",
   };
   return (
-    <p className="text-sm text-muted-foreground leading-relaxed">
-      {explanations[phase]}
+    <p className="text-xs text-muted-foreground leading-relaxed">
+      {text[phase]}
     </p>
   );
 }
 
+// ─── Mission Card ─────────────────────────────────────────────────────────────
 function MissionCard({
   mission,
   onClick,
@@ -429,6 +299,11 @@ function MissionCard({
       <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
         {mission.shortDescription}
       </p>
+
+      {/* Trust badges */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <TrustBadges mission={mission} />
+      </div>
 
       {/* Phase + reward row */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -473,12 +348,18 @@ function MissionCard({
   );
 }
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function MissionsPage() {
-  const isMissionsAdmin =
-    typeof window !== "undefined" && window.location.search.includes("admin=1");
+  const allMissions = useMissionsStore();
+  const publicMissions = allMissions.filter(
+    (m) => m.status === "live" || m.status === "closed",
+  );
 
-  const [missions, setMissions] = useState<Mission[]>(SEED_MISSIONS);
-  const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedMission = selectedId
+    ? (publicMissions.find((m) => m.id === selectedId) ?? null)
+    : null;
+
   const [showPostForm, setShowPostForm] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [postFormData, setPostFormData] = useState({
@@ -503,14 +384,12 @@ export default function MissionsPage() {
   const [filterStatus, setFilterStatus] = useState<"live" | "closed" | "All">(
     "All",
   );
-  const [submittingFor, setSubmittingFor] = useState<Mission | null>(null);
+  const [submittingForId, setSubmittingForId] = useState<string | null>(null);
+  const submittingFor = submittingForId
+    ? (allMissions.find((m) => m.id === submittingForId) ?? null)
+    : null;
 
   const feedRef = useRef<HTMLDivElement>(null);
-
-  // Only public missions
-  const publicMissions = missions.filter(
-    (m) => m.status === "live" || m.status === "closed",
-  );
 
   const filteredMissions =
     filterStatus === "All"
@@ -526,41 +405,27 @@ export default function MissionsPage() {
     0,
   );
 
-  // Pending approval missions (admin only)
-  const pendingMissions = missions.filter((m) => m.status === "pending_review");
-
   function scrollToFeed() {
     feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function handleApproveMission(id: string) {
-    setMissions((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: "live" as const } : m)),
-    );
-  }
-
   function handlePostSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const newMission: Mission = {
-      id: `mission-${Date.now()}`,
+    missionsStore.submitMission({
       title: postFormData.title,
       company: postFormData.company,
+      contactEmail: postFormData.email,
       shortDescription: postFormData.description,
       fullDescription: postFormData.description,
       successCriteria: postFormData.outcome,
       bounty: Number(postFormData.bounty) || 0,
       category: "General",
       difficulty: "Intermediate",
-      submissionCount: 0,
       deadline: postFormData.deadline,
-      status: "pending_review",
+      rewardStructure: postFormData.rewardStructure || "Winner: TBD",
       submissionInstructions:
         "Submit your solution link and a short explanation of your approach.",
-      phase: "entry",
-      rewardStructure: postFormData.rewardStructure || "Winner: TBD",
-      payoutStatus: "pending",
-    };
-    setMissions((prev) => [newMission, ...prev]);
+    });
     setPostSuccess(true);
     setTimeout(() => {
       setShowPostForm(false);
@@ -580,14 +445,8 @@ export default function MissionsPage() {
 
   function handleSubmitEntry(e: React.FormEvent) {
     e.preventDefault();
-    if (!submittingFor) return;
-    setMissions((prev) =>
-      prev.map((m) =>
-        m.id === submittingFor.id
-          ? { ...m, submissionCount: m.submissionCount + 1 }
-          : m,
-      ),
-    );
+    if (!submittingForId) return;
+    missionsStore.incrementSubmissions(submittingForId);
     setSubmitSuccess(true);
     setTimeout(() => {
       setShowSubmitForm(false);
@@ -599,23 +458,15 @@ export default function MissionsPage() {
         progressSummary: "",
         whatChanged: "",
       });
-      setSubmittingFor(null);
+      setSubmittingForId(null);
     }, 2000);
   }
 
   function openSubmitModal(mission: Mission) {
-    setSelectedMission(null);
-    setSubmittingFor(mission);
+    setSelectedId(null);
+    setSubmittingForId(mission.id);
     setShowSubmitForm(true);
   }
-
-  // sync selectedMission with any bounty updates
-  useEffect(() => {
-    if (selectedMission) {
-      const updated = missions.find((m) => m.id === selectedMission.id);
-      if (updated) setSelectedMission(updated);
-    }
-  }, [missions, selectedMission]);
 
   const submitFormTitle = submittingFor
     ? submittingFor.phase === "entry"
@@ -695,8 +546,21 @@ export default function MissionsPage() {
         </div>
       </section>
 
+      {/* ─── TRUST SECTION ──────────────────────────────────────────────────── */}
+      <section className="border-y border-amber-500/20 bg-amber-500/5">
+        <div className="container py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+            <BadgeCheck className="h-5 w-5 text-amber-400 flex-shrink-0" />
+            <p className="text-sm font-semibold text-amber-400">
+              Only verified funded missions go live. Builders compete on real
+              bounties, not promises.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ─── STATS BAR ─────────────────────────────────────────────────────── */}
-      <section className="border-y border-border/40 bg-card/50">
+      <section className="border-b border-border/40 bg-card/50">
         <div className="container py-8">
           <div className="grid grid-cols-3 gap-4 md:gap-8">
             <div className="text-center">
@@ -727,49 +591,6 @@ export default function MissionsPage() {
         </div>
       </section>
 
-      {/* ─── ADMIN: PENDING REVIEW SECTION ──────────────────────────────────── */}
-      {isMissionsAdmin && pendingMissions.length > 0 && (
-        <section className="container py-8">
-          <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-4 w-4 text-indigo-400" />
-              <h2 className="text-sm font-bold text-indigo-400 uppercase tracking-wider">
-                Admin — Pending Review ({pendingMissions.length})
-              </h2>
-            </div>
-            <div className="space-y-3">
-              {pendingMissions.map((mission) => (
-                <div
-                  key={mission.id}
-                  className="flex items-center justify-between gap-4 p-4 bg-background/60 rounded-lg border border-indigo-500/20"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground truncate">
-                      {mission.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {mission.company} · ${mission.bounty.toLocaleString()} ·{" "}
-                      {mission.rewardStructure}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <StatusBadge status={mission.status} />
-                    <Button
-                      size="sm"
-                      className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-xs h-7 px-3"
-                      onClick={() => handleApproveMission(mission.id)}
-                      data-ocid="missions.confirm_button"
-                    >
-                      Approve
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ─── MISSIONS FEED ──────────────────────────────────────────────────── */}
       <section
         id="missions-feed"
@@ -782,31 +603,24 @@ export default function MissionsPage() {
             <h2 className="text-2xl md:text-3xl font-bold">Open Missions</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {filteredMissions.length} mission
-              {filteredMissions.length !== 1 ? "s" : ""} found
+              {filteredMissions.length !== 1 ? "s" : ""} available
             </p>
           </div>
-
           {/* Filter tabs */}
-          <div
-            className="flex gap-1 p-1 bg-muted/50 rounded-lg border border-border/40"
-            data-ocid="missions.filter.tab"
-          >
-            {(["All", "live", "closed"] as const).map((status) => (
+          <div className="flex gap-1 p-1 bg-muted/50 rounded-lg border border-border/40">
+            {(["All", "live", "closed"] as const).map((s) => (
               <button
-                key={status}
+                key={s}
                 type="button"
-                onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all capitalize ${
-                  filterStatus === status
+                onClick={() => setFilterStatus(s)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  filterStatus === s
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
+                data-ocid="missions.tab"
               >
-                {status === "live"
-                  ? "Open"
-                  : status === "closed"
-                    ? "Closed"
-                    : "All"}
+                {s === "live" ? "Open" : s === "closed" ? "Closed" : "All"}
               </button>
             ))}
           </div>
@@ -815,118 +629,90 @@ export default function MissionsPage() {
         {/* Mission grid */}
         {filteredMissions.length === 0 ? (
           <div
-            className="text-center py-20 text-muted-foreground"
+            className="text-center py-24 space-y-3"
             data-ocid="missions.empty_state"
           >
-            <Target className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="font-medium">No missions match this filter.</p>
+            <Target className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+            <p className="text-muted-foreground font-medium">
+              No missions in this category yet.
+            </p>
+            <p className="text-sm text-muted-foreground/60">
+              Check back soon or post a problem.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredMissions.map((mission, idx) => (
-              <div key={mission.id} data-ocid={`missions.item.${idx + 1}`}>
-                <MissionCard
-                  mission={mission}
-                  onClick={() => setSelectedMission(mission)}
-                />
-              </div>
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                onClick={() => setSelectedId(mission.id)}
+                data-ocid={`missions.item.${idx + 1}`}
+              />
             ))}
           </div>
         )}
       </section>
 
-      {/* ─── HOW IT WORKS ───────────────────────────────────────────────────── */}
-      <section className="bg-muted/20 border-y border-border/40 py-16 md:py-20">
-        <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-            How ChainKey Missions Work
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto text-2xl">
-                🎯
+      {/* ─── TRUST / EXPLANATION SECTION ────────────────────────────────────── */}
+      <section className="border-t border-border/40 bg-card/30">
+        <div className="container py-20 max-w-4xl">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-wider uppercase">
+                <Shield className="h-3 w-3" />
+                Solution Engine
               </div>
-              <h3 className="font-bold text-base">
-                Businesses post real problems
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Companies and organizations define their challenge, set a bounty
-                budget, and specify success criteria.
+              <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+                This is not a job board.
+                <br />
+                <span className="text-muted-foreground font-normal">
+                  This is a solution engine.
+                </span>
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Businesses post real problems. Builders submit working
+                solutions. The best solution wins the bounty. No interviews. No
+                resumes. Just execution.
+              </p>
+              <p className="text-sm font-semibold text-foreground">
+                This is not hiring. This is outcome-based problem solving.
               </p>
             </div>
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-2xl">
-                🔨
-              </div>
-              <h3 className="font-bold text-base">Builders create solutions</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Developers, designers, and prompters browse open missions and
-                build solutions using Caffeine.ai.
-              </p>
-            </div>
-            <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-2xl">
-                🏆
-              </div>
-              <h3 className="font-bold text-base">Best solution wins</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Missions are evaluated on quality and fit. Best submission wins
-                the full bounty. Payment on delivery.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── TRUST / EXPLANATION ────────────────────────────────────────────── */}
-      <section className="container py-16 md:py-20">
-        <div className="relative overflow-hidden rounded-2xl bg-card border border-border/50 p-8 md:p-12">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-primary/5" />
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-
-          <div className="relative z-10 max-w-2xl">
-            <p className="text-xl md:text-2xl font-bold text-foreground mb-6 leading-snug">
-              &ldquo;This is not hiring. This is outcome-based problem
-              solving.&rdquo;
-            </p>
-            <div className="space-y-3 text-muted-foreground">
-              <p className="flex items-start gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                Businesses get working solutions — not resumes.
-              </p>
-              <p className="flex items-start gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                Builders get rewarded for execution — not interviews.
-              </p>
-              <p className="flex items-start gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                No resume required. No interviews. Just build, submit, and earn.
-              </p>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <div className="px-4 py-2 bg-background/60 border border-border/60 rounded-lg text-center">
-                <p className="text-base font-bold text-amber-400">
-                  Real problems.
-                </p>
-                <p className="text-xs text-muted-foreground">Real rewards.</p>
-              </div>
-              <div className="px-4 py-2 bg-background/60 border border-border/60 rounded-lg text-center">
-                <p className="text-base font-bold text-foreground">
-                  Best solution wins.
-                </p>
-                <p className="text-xs text-muted-foreground">Always.</p>
-              </div>
-              <div className="px-4 py-2 bg-background/60 border border-border/60 rounded-lg text-center">
-                <p className="text-base font-bold text-primary">
-                  Build. Submit.
-                </p>
-                <p className="text-xs text-muted-foreground">Earn.</p>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                {
+                  icon: <Target className="h-5 w-5" />,
+                  title: "Real problems.",
+                  body: "Real rewards.",
+                },
+                {
+                  icon: <Zap className="h-5 w-5" />,
+                  title: "Best solution wins.",
+                  body: "Always.",
+                },
+                {
+                  icon: <Trophy className="h-5 w-5" />,
+                  title: "Build. Submit.",
+                  body: "Earn.",
+                },
+                {
+                  icon: <Award className="h-5 w-5" />,
+                  title: "No resume required.",
+                  body: "Just results.",
+                },
+              ].map(({ icon, title, body }) => (
+                <div
+                  key={title}
+                  className="p-4 bg-background border border-border/60 rounded-xl space-y-2"
+                >
+                  <div className="text-amber-400">{icon}</div>
+                  <p className="text-sm font-bold text-foreground">{title}</p>
+                  <p className="text-xs text-muted-foreground">{body}</p>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Decorative trophy */}
-          <Trophy className="absolute bottom-8 right-8 h-24 w-24 text-amber-400/8 hidden md:block" />
         </div>
       </section>
 
@@ -934,7 +720,7 @@ export default function MissionsPage() {
       <Dialog
         open={!!selectedMission}
         onOpenChange={(open) => {
-          if (!open) setSelectedMission(null);
+          if (!open) setSelectedId(null);
         }}
       >
         <DialogContent
@@ -993,6 +779,35 @@ export default function MissionsPage() {
                   </div>
                 </div>
 
+                {/* Trust / Funding status */}
+                <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border/40">
+                  <span className="text-xs text-muted-foreground font-medium">
+                    Funding:
+                  </span>
+                  {selectedMission.fundingStatus === "funded" ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <BadgeCheck className="h-3 w-3" /> Verified &amp; Funded
+                    </span>
+                  ) : selectedMission.fundingStatus === "pending_funding" ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                      <Clock className="h-3 w-3" /> Pending Funding
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
+                      Unfunded
+                    </span>
+                  )}
+                  {(selectedMission.status === "closed" ||
+                    selectedMission.phase === "winner_selected") && (
+                    <>
+                      <span className="text-xs text-muted-foreground font-medium ml-2">
+                        Payout:
+                      </span>
+                      <PayoutBadge status={selectedMission.payoutStatus} />
+                    </>
+                  )}
+                </div>
+
                 {/* Phase stepper — How this mission works */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-foreground">
@@ -1012,17 +827,6 @@ export default function MissionsPage() {
                     {selectedMission.rewardStructure}
                   </p>
                 </div>
-
-                {/* Payout status — only for closed or winner_selected */}
-                {(selectedMission.status === "closed" ||
-                  selectedMission.phase === "winner_selected") && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground font-medium">
-                      Payout Status:
-                    </span>
-                    <PayoutBadge status={selectedMission.payoutStatus} />
-                  </div>
-                )}
 
                 {/* Full description */}
                 <div>
@@ -1079,7 +883,7 @@ export default function MissionsPage() {
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => setSelectedMission(null)}
+                    onClick={() => setSelectedId(null)}
                     data-ocid="missions.close_button"
                   >
                     Close
