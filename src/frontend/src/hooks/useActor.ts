@@ -27,16 +27,7 @@ export function useActor() {
 
       const actor = await createActorWithConfig(actorOptions);
       const adminToken = getSecretParameter("caffeineAdminToken") || "";
-      try {
-        await actor._initializeAccessControlWithSecret(adminToken);
-      } catch (e) {
-        // Registration failure is non-fatal for normal users.
-        // Actor is still valid and safe to use for all read/write calls.
-        console.warn(
-          "[ACTOR-INIT] _initializeAccessControlWithSecret failed (non-fatal):",
-          e,
-        );
-      }
+      await actor._initializeAccessControlWithSecret(adminToken);
       return actor;
     },
     // Only refetch when identity changes

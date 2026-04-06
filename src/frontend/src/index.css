@@ -358,3 +358,15 @@
 .sovereign-share-achievement-btn:hover {
   background: oklch(0.72 0.15 85 / 0.14);
 }
+
+/* ── Master tier badge — dark mode adaptive ─────────────────────────────────── */
+.tier-badge-master {
+  background: hsl(var(--caffeine-yellow) / 0.15);
+  color: hsl(var(--caffeine-yellow-foreground));
+  border: 1px solid hsl(var(--caffeine-yellow) / 0.5);
+}
+.dark .tier-badge-master {
+  background: hsl(222.2 84% 8%);
+  color: hsl(0 0% 100%);
+  border: 1px solid hsl(var(--caffeine-yellow) / 0.8);
+}

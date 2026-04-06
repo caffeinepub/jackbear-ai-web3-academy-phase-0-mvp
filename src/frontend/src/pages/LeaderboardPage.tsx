@@ -119,20 +119,21 @@ function getRankIcon(rank: number) {
 
 function TierBadge({ tier }: { tier: BPMasteryTier }) {
   const config = TIER_STYLES[tier];
-  return (
-    <span
-      style={{
-        ...config.style,
-        padding: "2px 8px",
-        borderRadius: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: "0.04em",
-      }}
-    >
-      {config.label}
-    </span>
-  );
+  const baseStyle: React.CSSProperties = {
+    padding: "2px 8px",
+    borderRadius: 4,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+  };
+  if (tier === "Master") {
+    return (
+      <span className="tier-badge-master" style={baseStyle}>
+        {config.label}
+      </span>
+    );
+  }
+  return <span style={{ ...config.style, ...baseStyle }}>{config.label}</span>;
 }
 
 type RankContext = {

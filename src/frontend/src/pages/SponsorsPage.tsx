@@ -115,33 +115,35 @@ function MetricCard({
       className={`rounded-xl border p-6 flex flex-col gap-2 ${
         gold
           ? "border-yellow-400/40 bg-yellow-400/5"
-          : "border-white/10 bg-white/5"
+          : "border-border bg-muted/30"
       }`}
     >
       <div className="flex items-center gap-2 mb-1">
         <LiveDot color={gold ? "#facc15" : "#4ade80"} />
-        <span className="text-xs font-semibold uppercase tracking-widest text-white/40">
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           {label}
         </span>
       </div>
       {loading ? (
-        <Skeleton className="h-9 w-24 bg-white/10" />
+        <Skeleton className="h-9 w-24" />
       ) : (
         <div
           className={`text-3xl font-bold ${
-            gold ? "text-yellow-400" : "text-white"
+            gold ? "text-yellow-400" : "text-foreground"
           }`}
         >
           {isNumeric ? animated.toLocaleString() : (value as string)}
           {suffix && isLive && (
-            <span className="ml-1 text-base font-normal text-white/40">
+            <span className="ml-1 text-base font-normal text-muted-foreground">
               {suffix}
             </span>
           )}
         </div>
       )}
       {why && (
-        <p className="text-sm text-white/50 leading-relaxed mt-1">{why}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+          {why}
+        </p>
       )}
     </div>
   );
@@ -175,7 +177,7 @@ function PackageCard({
       className={`rounded-xl border p-7 flex flex-col gap-5 relative ${
         highlighted
           ? "border-yellow-400/50 bg-yellow-400/5"
-          : "border-white/10 bg-white/5"
+          : "border-border bg-muted/30"
       }`}
     >
       {highlighted && (
@@ -184,26 +186,31 @@ function PackageCard({
         </span>
       )}
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-1">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
           {tier}
         </p>
-        <h3 className="text-xl font-bold text-white">{tagline}</h3>
+        <h3 className="text-xl font-bold text-foreground">{tagline}</h3>
       </div>
       <p
-        className={`text-2xl font-bold ${highlighted ? "text-yellow-400" : "text-white"}`}
+        className={`text-2xl font-bold ${
+          highlighted ? "text-yellow-400" : "text-foreground"
+        }`}
       >
         {price}
       </p>
       <ul className="flex flex-col gap-2">
         {features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-sm text-white/70">
+          <li
+            key={f}
+            className="flex items-start gap-2 text-sm text-foreground/70"
+          >
             <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-green-400" />
             {f}
           </li>
         ))}
       </ul>
-      <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
-        <span className="font-semibold text-white/80">Reach:</span> {reach}
+      <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <span className="font-semibold text-foreground/80">Reach:</span> {reach}
       </div>
       <div className="mt-auto">
         <a
@@ -215,13 +222,13 @@ function PackageCard({
             className={`w-full ${
               highlighted
                 ? "bg-yellow-400 hover:bg-yellow-300 text-black font-bold"
-                : "border border-white/20 bg-transparent text-white hover:bg-white/10"
+                : "border border-border bg-transparent text-foreground hover:bg-muted/50"
             }`}
           >
             Request Access <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </a>
-        <p className="text-center text-xs text-white/40 mt-2">{note}</p>
+        <p className="text-center text-xs text-muted-foreground mt-2">{note}</p>
       </div>
     </div>
   );
@@ -276,10 +283,10 @@ function EnterpriseCard() {
           <Badge className="w-fit bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 uppercase tracking-widest text-xs font-bold">
             FLAGSHIP PARTNER
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             Enterprise — Embedded Attention
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl">
+          <p className="text-muted-foreground text-lg max-w-2xl">
             This is not advertising. This is embedded attention. One brand per
             category. Platform-level presence across every surface.
           </p>
@@ -289,15 +296,17 @@ function EnterpriseCard() {
           {features.map((f) => (
             <div
               key={f.label}
-              className="rounded-xl border border-yellow-400/15 bg-black/30 p-5 flex flex-col gap-2"
+              className="rounded-xl border border-border bg-muted/30 p-5 flex flex-col gap-2"
             >
               <div className="flex items-center gap-2">
                 {f.icon}
-                <span className="font-semibold text-white text-sm">
+                <span className="font-semibold text-foreground text-sm">
                   {f.label}
                 </span>
               </div>
-              <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {f.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -307,7 +316,7 @@ function EnterpriseCard() {
             <p className="text-yellow-400 font-bold text-xl">
               Starting at $10,000/mo — Custom pricing available
             </p>
-            <p className="text-white/40 text-sm italic">
+            <p className="text-muted-foreground/60 text-sm italic">
               &quot;Only one partner per category. Once filled, it's
               closed.&quot;
             </p>
@@ -332,6 +341,9 @@ export default function SponsorsPage() {
   const { actor: authActor } = useActor();
   const [metrics, setMetrics] = useState<PublicMetrics | null>(null);
   const [leaderboardSize, setLeaderboardSize] = useState<number | null>(null);
+  const [totalBPDistributed, setTotalBPDistributed] = useState<number | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const fetchData = useCallback(async () => {
@@ -362,9 +374,13 @@ export default function SponsorsPage() {
         Array.isArray(lb) ? lb.length : "?",
       );
       setMetrics(m as PublicMetrics);
-      setLeaderboardSize(
-        Array.isArray(lb) ? (lb as BPLeaderboardEntry[]).length : 0,
+      const lbEntries = lb as BPLeaderboardEntry[];
+      setLeaderboardSize(Array.isArray(lb) ? lbEntries.length : 0);
+      const totalBP = lbEntries.reduce(
+        (sum, e) => sum + Number(e.allTimeBP),
+        0,
       );
+      setTotalBPDistributed(totalBP);
       setLastUpdated(new Date());
     } catch (err) {
       console.error("[SPONSOR-METRICS] SponsorsPage: fetchData failed:", err);
@@ -416,14 +432,14 @@ export default function SponsorsPage() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-foreground leading-tight tracking-tight">
             <span className="text-yellow-400">1.5M+ Impressions.</span>
             <br />
             Real Users. Live Proof.
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-white/60 max-w-2xl leading-relaxed">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
             JackBear.ai is a gamified Web3 AI learning platform built on ICP.
             Users earn rewards for learning. Sponsors get verified attention
             inside an active engagement loop — not a passive feed.
@@ -437,32 +453,32 @@ export default function SponsorsPage() {
                 1.5M+ Impressions (X + YouTube)
               </span>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <Users className="w-4 h-4 text-white/60 shrink-0" />
-              <span className="text-sm font-semibold text-white">
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 px-4 py-3">
+              <Users className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-semibold text-foreground">
                 {leaderboardSize
                   ? `${leaderboardSize}+ Registered`
                   : "Growing Users"}
               </span>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <BookOpen className="w-4 h-4 text-white/60 shrink-0" />
-              <span className="text-sm font-semibold text-white">
-                {activeLearners
-                  ? `${(activeLearners * 12).toLocaleString()}+ Lessons`
-                  : "Thousands of Lessons"}
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 px-4 py-3">
+              <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-semibold text-foreground">
+                {totalBPDistributed
+                  ? `${totalBPDistributed.toLocaleString()}+ BP Earned`
+                  : "Verified Engagement"}
               </span>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <Shield className="w-4 h-4 text-white/60 shrink-0" />
-              <span className="text-sm font-semibold text-white">
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 px-4 py-3">
+              <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-semibold text-foreground">
                 ICP Verified
               </span>
             </div>
           </div>
 
           {/* Italic proof line */}
-          <p className="text-white/40 italic text-sm md:text-base">
+          <p className="text-muted-foreground/70 italic text-sm md:text-base">
             &quot;Sponsors don't guess performance here — they watch it happen
             live.&quot;
           </p>
@@ -485,7 +501,7 @@ export default function SponsorsPage() {
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
               data-ocid="sponsors.live_activity.button"
-              className="inline-flex items-center justify-center rounded-md border border-white/20 bg-transparent px-8 py-3 text-base font-medium text-white hover:bg-white/10 transition-colors"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-transparent px-8 py-3 text-base font-medium text-foreground hover:bg-muted/50 transition-colors"
             >
               View Live Activity <ChevronDown className="ml-2 w-4 h-4" />
             </button>
@@ -498,19 +514,19 @@ export default function SponsorsPage() {
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
         >
-          <ArrowDown className="w-5 h-5 text-white/30" />
+          <ArrowDown className="w-5 h-5 text-muted-foreground/50" />
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 2 — TRACTION */}
       <section className="px-4 py-20 md:py-24 max-w-4xl mx-auto">
         <motion.div {...fadeUp} className="flex flex-col gap-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             Proven Attention. Early Infrastructure.
           </h2>
-          <div className="flex flex-col gap-6 text-white/60 text-lg leading-relaxed">
+          <div className="flex flex-col gap-6 text-muted-foreground text-lg leading-relaxed">
             <p>
               Over 1.5 million impressions generated organically across X and
               YouTube — without paid ads. That's real reach from a community
@@ -534,7 +550,7 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 3 — LIVE PLATFORM ACTIVITY */}
       <section
@@ -550,18 +566,18 @@ export default function SponsorsPage() {
                 LIVE + ALL-TIME
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
               Platform Activity (All-Time + Live)
             </h2>
-            <p className="text-white/50 text-lg max-w-3xl">
+            <p className="text-muted-foreground text-lg max-w-3xl">
               Proven traction with real users. Live activity shows ongoing
               momentum.
             </p>
-            <p className="text-white/40 text-base max-w-3xl">
+            <p className="text-muted-foreground/70 text-base max-w-3xl">
               All-time metrics establish authority. Live metrics show the system
               in motion.
             </p>
-            <p className="text-white/40 text-sm italic">
+            <p className="text-muted-foreground/50 text-sm italic">
               All data reflects authenticated user behavior — not passive
               impressions.
             </p>
@@ -569,7 +585,7 @@ export default function SponsorsPage() {
 
           {/* All-time metrics */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold text-white/70 uppercase tracking-widest text-sm">
+            <h3 className="text-lg font-semibold text-foreground/70 uppercase tracking-widest text-sm">
               All-Time
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -577,26 +593,28 @@ export default function SponsorsPage() {
                 label="Total Learners"
                 value={leaderboardSize}
                 suffix="users"
-                why="Cumulative users who have engaged with at least one lesson or quiz."
-                loading={loading}
-              />
-              <MetricCard
-                label="Lessons Completed"
-                value={activeLearners !== null ? activeLearners * 12 : null}
-                why="Total lessons completed — direct measure of active learning."
-                loading={loading}
-              />
-              <MetricCard
-                label="Quiz Completions"
-                value={activeLearners !== null ? activeLearners * 8 : null}
-                why="Only passed quizzes earn Bear Points — ensures real participation."
+                why="Registered users with verified on-chain activity."
                 loading={loading}
               />
               <MetricCard
                 label="Leaderboard Participants"
                 value={leaderboardSize}
                 suffix="ranked"
-                why="Verified active users competing on the platform."
+                why="Active users competing on the platform leaderboard."
+                loading={loading}
+              />
+              <MetricCard
+                label="Bear Points Distributed"
+                value={totalBPDistributed}
+                suffix="BP"
+                why="Total Bear Points earned across all users — reflects cumulative engagement across games, lessons, and quizzes."
+                loading={loading}
+                gold
+              />
+              <MetricCard
+                label="Avg Progress Score"
+                value={metrics ? Number(metrics.averageProgress) : null}
+                why="Average lesson progress index across the active learner base."
                 loading={loading}
               />
             </div>
@@ -604,7 +622,7 @@ export default function SponsorsPage() {
 
           {/* Live metrics */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold text-white/70 uppercase tracking-widest text-sm">
+            <h3 className="text-lg font-semibold text-foreground/70 uppercase tracking-widest text-sm">
               Live Activity (Last 24h)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -616,9 +634,9 @@ export default function SponsorsPage() {
                 loading={loading}
               />
               <MetricCard
-                label="Top Lesson (Live)"
-                value={topLesson ?? "Loading..."}
-                why="Content currently driving the most engagement."
+                label="Top Activity (Live)"
+                value={topLesson ?? "Games & Lessons"}
+                why="Most engaged content currently. Includes Crossword, ICP Decode, and lesson activity."
                 loading={loading}
               />
               <MetricCard
@@ -630,21 +648,21 @@ export default function SponsorsPage() {
             </div>
           </div>
 
-          <p className="text-white/40 italic text-sm">
+          <p className="text-muted-foreground/50 italic text-sm">
             Live metrics refresh automatically and reflect real-time platform
             activity.
           </p>
 
           <div className="flex items-center gap-4">
             {lastUpdated && (
-              <span className="text-xs text-white/30">
+              <span className="text-xs text-muted-foreground/50">
                 Last updated: {lastUpdated.toLocaleTimeString()}
               </span>
             )}
             <button
               type="button"
               onClick={fetchData}
-              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-foreground/70 transition-colors"
               data-ocid="sponsors.refresh.button"
             >
               <RefreshCw className="w-3 h-3" /> Refresh
@@ -653,16 +671,16 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 4 — ENGAGEMENT DEPTH */}
       <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
         <motion.div {...fadeUp} className="flex flex-col gap-10">
           <div className="flex flex-col gap-3">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
               Users don't scroll. They participate.
             </h2>
-            <p className="text-white/50 text-lg">
+            <p className="text-muted-foreground text-lg">
               This creates multiple engagement events per session — not a single
               impression.
             </p>
@@ -688,11 +706,13 @@ export default function SponsorsPage() {
             ].map((card) => (
               <div
                 key={card.title}
-                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-3"
+                className="rounded-xl border border-border bg-muted/30 p-6 flex flex-col gap-3"
               >
                 {card.icon}
-                <h3 className="text-lg font-bold text-white">{card.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">
+                <h3 className="text-lg font-bold text-foreground">
+                  {card.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {card.body}
                 </p>
               </div>
@@ -700,7 +720,7 @@ export default function SponsorsPage() {
           </div>
 
           <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-6 py-5">
-            <p className="text-white/70 text-sm md:text-base leading-relaxed">
+            <p className="text-foreground/70 text-sm md:text-base leading-relaxed">
               Most ad platforms give you one shot. Here, a single sponsor
               placement can be seen{" "}
               <span className="text-yellow-400 font-semibold">
@@ -712,16 +732,16 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 5 — VIRAL ENGINE */}
       <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
         <motion.div {...fadeUp} className="flex flex-col gap-10">
           <div className="flex flex-col gap-3">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
               Built-in growth loops. No ad spend required.
             </h2>
-            <p className="text-white/50 text-lg max-w-2xl">
+            <p className="text-muted-foreground text-lg max-w-2xl">
               Users are not just learners. They are distribution channels.
               Sharing is built into the system at every major achievement point.
             </p>
@@ -747,11 +767,13 @@ export default function SponsorsPage() {
             ].map((card) => (
               <div
                 key={card.title}
-                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-3"
+                className="rounded-xl border border-border bg-muted/30 p-6 flex flex-col gap-3"
               >
                 {card.icon}
-                <h3 className="text-lg font-bold text-white">{card.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">
+                <h3 className="text-lg font-bold text-foreground">
+                  {card.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {card.body}
                 </p>
               </div>
@@ -764,12 +786,12 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 6 — PERFORMANCE / VALUE */}
       <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
         <motion.div {...fadeUp} className="flex flex-col gap-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             What your placement actually buys.
           </h2>
 
@@ -802,11 +824,13 @@ export default function SponsorsPage() {
             ].map((col) => (
               <div
                 key={col.label}
-                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4"
+                className="rounded-xl border border-border bg-muted/30 p-6 flex flex-col gap-4"
               >
                 {col.icon}
-                <h3 className="text-xl font-bold text-white">{col.label}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">
+                <h3 className="text-xl font-bold text-foreground">
+                  {col.label}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {col.desc}
                 </p>
                 <div className="mt-auto rounded-lg border border-yellow-400/20 bg-yellow-400/5 px-4 py-2">
@@ -819,7 +843,7 @@ export default function SponsorsPage() {
           </div>
 
           <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-6 py-5">
-            <p className="text-white/70 text-base leading-relaxed text-center">
+            <p className="text-foreground/70 text-base leading-relaxed text-center">
               &quot;This is not banner advertising. This is{" "}
               <span className="text-yellow-400 font-semibold">
                 context-native placement inside active behavior
@@ -830,16 +854,16 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 7 — SPONSOR PACKAGES */}
       <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
         <motion.div {...fadeUp} className="flex flex-col gap-10">
           <div className="flex flex-col gap-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
               Three ways to own the attention.
             </h2>
-            <p className="text-white/60 text-lg max-w-3xl">
+            <p className="text-muted-foreground text-lg max-w-3xl">
               You're not buying current reach. You're positioning inside a
               system that is scaling. Early partners lock in pricing before this
               becomes competitive.
@@ -894,7 +918,7 @@ export default function SponsorsPage() {
             />
           </div>
 
-          <p className="text-white/40 text-sm italic text-center">
+          <p className="text-muted-foreground/50 text-sm italic text-center">
             Pricing is set for early-stage scale. It will increase as the
             platform grows. Partners who move now lock in current rates
             permanently.
@@ -902,7 +926,7 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 8 — ENTERPRISE TIER */}
       <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
@@ -911,12 +935,12 @@ export default function SponsorsPage() {
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 9 — TRUST LAYER */}
       <section className="px-4 py-20 md:py-24 max-w-6xl mx-auto">
         <motion.div {...fadeUp} className="flex flex-col gap-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             Live data. No screenshots. No theater.
           </h2>
 
@@ -940,11 +964,13 @@ export default function SponsorsPage() {
             ].map((card) => (
               <div
                 key={card.title}
-                className="rounded-xl border border-white/10 bg-white/5 p-6 flex flex-col gap-3"
+                className="rounded-xl border border-border bg-muted/30 p-6 flex flex-col gap-3"
               >
                 {card.icon}
-                <h3 className="text-lg font-bold text-white">{card.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">
+                <h3 className="text-lg font-bold text-foreground">
+                  {card.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {card.body}
                 </p>
               </div>
@@ -952,24 +978,24 @@ export default function SponsorsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Badge className="flex items-center gap-1.5 border border-white/10 bg-white/5 text-white/70 px-3 py-1.5">
+            <Badge className="flex items-center gap-1.5 border border-border bg-muted/30 text-muted-foreground px-3 py-1.5">
               <Globe className="w-3 h-3" /> ICP Blockchain
             </Badge>
-            <Badge className="flex items-center gap-1.5 border border-white/10 bg-white/5 text-white/70 px-3 py-1.5">
+            <Badge className="flex items-center gap-1.5 border border-border bg-muted/30 text-muted-foreground px-3 py-1.5">
               <Users className="w-3 h-3" /> Real Users Only
             </Badge>
-            <Badge className="flex items-center gap-1.5 border border-white/10 bg-white/5 text-white/70 px-3 py-1.5">
+            <Badge className="flex items-center gap-1.5 border border-border bg-muted/30 text-muted-foreground px-3 py-1.5">
               <CheckCircle className="w-3 h-3" /> No Vanity Metrics
             </Badge>
           </div>
 
-          <p className="text-2xl md:text-3xl font-bold text-white">
+          <p className="text-2xl md:text-3xl font-bold text-foreground">
             &quot;If it's not measurable, it doesn't exist here.&quot;
           </p>
         </motion.div>
       </section>
 
-      <Separator className="bg-white/5" />
+      <Separator />
 
       {/* SECTION 10 — FINAL CTA */}
       <section className="relative px-4 py-24 md:py-32 overflow-hidden">
@@ -980,11 +1006,11 @@ export default function SponsorsPage() {
           {...fadeUp}
           className="flex flex-col items-center text-center gap-8 max-w-3xl mx-auto"
         >
-          <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+          <h2 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
             Own attention before it gets expensive.
           </h2>
 
-          <p className="text-white/60 text-lg leading-relaxed">
+          <p className="text-muted-foreground text-lg leading-relaxed">
             Web3 education is growing fast. JackBear.ai is already the
             infrastructure. Early sponsors get locked-in pricing, preferred
             placement, and direct access to a community that will only become
@@ -992,7 +1018,7 @@ export default function SponsorsPage() {
           </p>
 
           <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/5 px-6 py-4 max-w-xl">
-            <p className="text-white/60 text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               Pricing increases as the platform scales. Partners who move now
               lock in current rates permanently.{" "}
               <span className="text-yellow-400 font-semibold">
@@ -1010,7 +1036,7 @@ export default function SponsorsPage() {
             </Button>
           </a>
 
-          <p className="text-white/40 text-sm">
+          <p className="text-muted-foreground/70 text-sm">
             Direct founder access. No agencies. Replied within 24 hours.
           </p>
 
@@ -1021,14 +1047,14 @@ export default function SponsorsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 px-4 py-8 text-center">
-        <p className="text-white/30 text-sm">
+      <footer className="border-t border-border px-4 py-8 text-center">
+        <p className="text-muted-foreground/50 text-sm">
           © {new Date().getFullYear()}. Built with love using{" "}
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-white/50 transition-colors"
+            className="underline hover:text-muted-foreground transition-colors"
           >
             caffeine.ai
           </a>
