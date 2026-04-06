@@ -73,6 +73,11 @@ function StatusBadge({ status }: { status: MissionStatus }) {
       className: "bg-muted text-muted-foreground border-border",
       dot: "bg-muted-foreground/50",
     },
+    demo_completed: {
+      label: "Completed",
+      className: "bg-muted text-muted-foreground border-border",
+      dot: "bg-muted-foreground/40",
+    },
     pending_review: {
       label: "Pending Review",
       className: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
@@ -266,9 +271,11 @@ function PhaseExplanation({ phase }: { phase: Mission["phase"] }) {
 // ─── Mission Card ─────────────────────────────────────────────────────────────
 function MissionCard({
   mission,
+  isExample,
   onClick,
 }: {
   mission: Mission;
+  isExample?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -300,9 +307,25 @@ function MissionCard({
         {mission.shortDescription}
       </p>
 
-      {/* Trust badges */}
+      {/* Trust badges — example vs live */}
       <div className="flex items-center gap-2 flex-wrap">
-        <TrustBadges mission={mission} />
+        {isExample ? (
+          <>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              <Info className="h-3 w-3" /> Example
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
+              <CheckCircle className="h-3 w-3" /> Completed
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <BadgeCheck className="h-3 w-3" /> Funded
+            </span>
+            <TrustBadges mission={mission} />
+          </>
+        )}
       </div>
 
       {/* Phase + reward row */}
@@ -311,7 +334,8 @@ function MissionCard({
         <span className="text-xs font-semibold text-amber-400">
           {mission.rewardStructure.split("·")[0].trim()}
         </span>
-        {mission.status === "closed" && (
+        {(mission.status === "closed" ||
+          mission.status === "demo_completed") && (
           <PayoutBadge status={mission.payoutStatus} />
         )}
       </div>
@@ -336,8 +360,8 @@ function MissionCard({
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" />
-          {mission.status === "closed"
-            ? `Closed ${formatDeadline(mission.deadline)}`
+          {mission.status === "closed" || mission.status === "demo_completed"
+            ? `Completed ${formatDeadline(mission.deadline)}`
             : `${getTimeRemaining(mission.deadline)} · ${formatDeadline(mission.deadline)}`}
         </span>
         <span className="flex items-center gap-1 text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
@@ -351,13 +375,12 @@ function MissionCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function MissionsPage() {
   const allMissions = useMissionsStore();
-  const publicMissions = allMissions.filter(
-    (m) => m.status === "live" || m.status === "closed",
-  );
+  const publicMissions = allMissions.filter((m) => m.status === "live");
+  const exampleMissions = allMissions.filter((m) => m.isExample === true);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedMission = selectedId
-    ? (publicMissions.find((m) => m.id === selectedId) ?? null)
+    ? (allMissions.find((m) => m.id === selectedId) ?? null)
     : null;
 
   const [showPostForm, setShowPostForm] = useState(false);
@@ -381,9 +404,6 @@ export default function MissionsPage() {
   });
   const [postSuccess, setPostSuccess] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<"live" | "closed" | "All">(
-    "All",
-  );
   const [submittingForId, setSubmittingForId] = useState<string | null>(null);
   const submittingFor = submittingForId
     ? (allMissions.find((m) => m.id === submittingForId) ?? null)
@@ -391,14 +411,7 @@ export default function MissionsPage() {
 
   const feedRef = useRef<HTMLDivElement>(null);
 
-  const filteredMissions =
-    filterStatus === "All"
-      ? publicMissions
-      : publicMissions.filter((m) => m.status === filterStatus);
-
-  const totalBounty = publicMissions
-    .filter((m) => m.status !== "closed")
-    .reduce((sum, m) => sum + m.bounty, 0);
+  const totalBounty = publicMissions.reduce((sum, m) => sum + m.bounty, 0);
 
   const totalSubmissions = publicMissions.reduce(
     (sum, m) => sum + m.submissionCount,
@@ -595,63 +608,72 @@ export default function MissionsPage() {
       <section
         id="missions-feed"
         ref={feedRef}
-        className="container py-16 md:py-20"
+        className="container py-16 md:py-20 space-y-16"
       >
-        {/* Section header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold">Open Missions</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {filteredMissions.length} mission
-              {filteredMissions.length !== 1 ? "s" : ""} available
-            </p>
+        {/* ── Section A: Live Missions (Funded) ── */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold">
+              Live Missions (Funded)
+            </h2>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              LIVE
+            </span>
           </div>
-          {/* Filter tabs */}
-          <div className="flex gap-1 p-1 bg-muted/50 rounded-lg border border-border/40">
-            {(["All", "live", "closed"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  filterStatus === s
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                data-ocid="missions.tab"
-              >
-                {s === "live" ? "Open" : s === "closed" ? "Closed" : "All"}
-              </button>
-            ))}
-          </div>
+
+          {publicMissions.length === 0 ? (
+            <div
+              className="text-center py-16 space-y-3 border border-border/40 rounded-xl bg-card/30"
+              data-ocid="missions.empty_state"
+            >
+              <Target className="h-10 w-10 text-muted-foreground/30 mx-auto" />
+              <p className="text-muted-foreground font-medium">
+                No live missions yet.
+              </p>
+              <p className="text-sm text-muted-foreground/60">
+                Check back soon — funded missions will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {publicMissions.map((mission, idx) => (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  isExample={false}
+                  onClick={() => setSelectedId(mission.id)}
+                  data-ocid={`missions.item.${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Mission grid */}
-        {filteredMissions.length === 0 ? (
-          <div
-            className="text-center py-24 space-y-3"
-            data-ocid="missions.empty_state"
-          >
-            <Target className="h-12 w-12 text-muted-foreground/30 mx-auto" />
-            <p className="text-muted-foreground font-medium">
-              No missions in this category yet.
-            </p>
-            <p className="text-sm text-muted-foreground/60">
-              Check back soon or post a problem.
-            </p>
+        {/* ── Section B: Example Missions ── */}
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold">Example Missions</h2>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
+              How it works
+            </span>
           </div>
-        ) : (
+          <p className="text-sm text-muted-foreground mb-8 max-w-2xl">
+            These are example missions to demonstrate how the system works. Live
+            funded missions appear above.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredMissions.map((mission, idx) => (
+            {exampleMissions.map((mission, idx) => (
               <MissionCard
                 key={mission.id}
                 mission={mission}
+                isExample={true}
                 onClick={() => setSelectedId(mission.id)}
                 data-ocid={`missions.item.${idx + 1}`}
               />
             ))}
           </div>
-        )}
+        </div>
       </section>
 
       {/* ─── TRUST / EXPLANATION SECTION ────────────────────────────────────── */}

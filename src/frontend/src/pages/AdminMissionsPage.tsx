@@ -94,6 +94,11 @@ function StatusBadge({ status }: { status: MissionStatus }) {
       className: "bg-muted text-muted-foreground border-border",
       dot: "bg-muted-foreground/50",
     },
+    demo_completed: {
+      label: "Demo Completed",
+      className: "bg-muted text-muted-foreground border-border",
+      dot: "bg-muted-foreground/40",
+    },
   };
   const c = config[status];
   return (
@@ -579,11 +584,11 @@ export default function AdminMissionsPage() {
   }
 
   function handleFundingChange(id: string, fundingStatus: FundingStatus) {
-    missionsStore.updateFundingStatus(id, fundingStatus);
+    missionsStore.updateFunding(id, fundingStatus);
   }
 
   function handlePayoutChange(id: string, payoutStatus: PayoutStatus) {
-    missionsStore.updatePayoutStatus(id, payoutStatus);
+    missionsStore.updatePayout(id, payoutStatus);
   }
 
   function handlePublishLive(id: string) {

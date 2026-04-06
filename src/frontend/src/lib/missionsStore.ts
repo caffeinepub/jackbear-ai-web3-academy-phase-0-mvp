@@ -20,7 +20,8 @@ export type MissionStatus =
   | "winner_selected"
   | "paid"
   | "rejected"
-  | "closed";
+  | "closed"
+  | "demo_completed";
 
 export type MissionPhase =
   | "entry"
@@ -51,11 +52,12 @@ export interface Mission {
   payoutStatus: PayoutStatus;
   fundingStatus: FundingStatus;
   submissionInstructions: string;
+  isExample?: boolean;
 }
 
 // ─── Seed Data ────────────────────────────────────────────────────────────────
-// Live missions already have fundingStatus=funded so they pass the trust gate.
-// Admin-only missions start as pending_review / pending_funding for demo.
+// All previously-live/closed seed missions are reclassified as demo_completed examples.
+// Admin-only missions (pending_review, pending_funding, rejected) keep their statuses.
 
 const INITIAL_MISSIONS: Mission[] = [
   {
@@ -75,13 +77,14 @@ const INITIAL_MISSIONS: Mission[] = [
     submissionCount: 7,
     deadline: "2025-07-15",
     submittedDate: "2025-06-01",
-    status: "live",
+    status: "demo_completed",
     phase: "entry",
     rewardStructure: "Winner: $500 USDC · Runner-up: $100 USDC",
-    payoutStatus: "pending",
+    payoutStatus: "paid",
     fundingStatus: "funded",
     submissionInstructions:
       "Submit a Caffeine.ai project link and a short explanation of your approach.",
+    isExample: true,
   },
   {
     id: "mission-002",
@@ -100,14 +103,15 @@ const INITIAL_MISSIONS: Mission[] = [
     submissionCount: 12,
     deadline: "2025-07-22",
     submittedDate: "2025-06-05",
-    status: "live",
+    status: "demo_completed",
     phase: "shortlist",
     rewardStructure:
       "Winner: $600 USDC · Finalist 1: $100 USDC · Finalist 2: $50 USDC",
-    payoutStatus: "pending",
+    payoutStatus: "paid",
     fundingStatus: "funded",
     submissionInstructions:
       "Link to deployed app + GitHub repo if public. Include a 2-minute demo video.",
+    isExample: true,
   },
   {
     id: "mission-003",
@@ -126,13 +130,14 @@ const INITIAL_MISSIONS: Mission[] = [
     submissionCount: 5,
     deadline: "2025-08-01",
     submittedDate: "2025-06-10",
-    status: "live",
+    status: "demo_completed",
     phase: "finalist",
     rewardStructure: "Winner: $1,000 USDC · Runner-up: $200 USDC",
-    payoutStatus: "pending",
+    payoutStatus: "paid",
     fundingStatus: "funded",
     submissionInstructions:
       "Deploy on ICP and share the canister ID. Include a README with setup instructions.",
+    isExample: true,
   },
   {
     id: "mission-004",
@@ -150,13 +155,14 @@ const INITIAL_MISSIONS: Mission[] = [
     submissionCount: 3,
     deadline: "2025-08-15",
     submittedDate: "2025-06-12",
-    status: "live",
+    status: "demo_completed",
     phase: "finalist",
     rewardStructure: "Winner: $1,500 USDC · Finalist: $500 USDC",
-    payoutStatus: "pending",
+    payoutStatus: "paid",
     fundingStatus: "funded",
     submissionInstructions:
       "Submit a Caffeine.ai project link. Include a short loom or written walkthrough.",
+    isExample: true,
   },
   {
     id: "mission-005",
@@ -175,13 +181,14 @@ const INITIAL_MISSIONS: Mission[] = [
     submissionCount: 9,
     deadline: "2025-07-30",
     submittedDate: "2025-06-15",
-    status: "live",
+    status: "demo_completed",
     phase: "entry",
     rewardStructure: "Winner: $650 USDC · Runner-up: $150 USDC",
-    payoutStatus: "pending",
+    payoutStatus: "paid",
     fundingStatus: "funded",
     submissionInstructions:
       "Share a deployed demo link. Include the canister ID used for minting.",
+    isExample: true,
   },
   {
     id: "mission-006",
@@ -200,13 +207,14 @@ const INITIAL_MISSIONS: Mission[] = [
     submissionCount: 14,
     deadline: "2025-06-30",
     submittedDate: "2025-05-20",
-    status: "closed",
+    status: "demo_completed",
     phase: "winner_selected",
     rewardStructure: "Winner: $500 USDC · Runner-up: $100 USDC",
     payoutStatus: "paid",
     fundingStatus: "funded",
     submissionInstructions:
       "Submit your deployed app link with a short explanation of the monitoring approach.",
+    isExample: true,
   },
   // Admin-only missions (pending states — not visible publicly)
   {
@@ -309,9 +317,7 @@ export const missionsStore = {
 
   /** Get missions visible on the public /missions page (status === "live" only). */
   getPublic(): Mission[] {
-    return _missions.filter(
-      (m) => m.status === "live" || m.status === "closed",
-    );
+    return _missions.filter((m) => m.status === "live");
   },
 
   /** Update the status of a single mission. */
@@ -320,16 +326,19 @@ export const missionsStore = {
     notify();
   },
 
-  /** Update the funding status of a single mission. */
-  updateFundingStatus(id: string, fundingStatus: FundingStatus): void {
+  /** Update funding status of a single mission. */
+  updateFunding(
+    id: string,
+    fundingStatus: "unfunded" | "pending_funding" | "funded",
+  ): void {
     _missions = _missions.map((m) =>
       m.id === id ? { ...m, fundingStatus } : m,
     );
     notify();
   },
 
-  /** Update the payout status of a single mission. */
-  updatePayoutStatus(id: string, payoutStatus: PayoutStatus): void {
+  /** Update payout status. */
+  updatePayout(id: string, payoutStatus: PayoutStatus): void {
     _missions = _missions.map((m) =>
       m.id === id ? { ...m, payoutStatus } : m,
     );
@@ -337,14 +346,12 @@ export const missionsStore = {
   },
 
   /**
-   * Publish a mission live.
-   * BLOCKED unless fundingStatus === "funded".
-   * Returns false if blocked, true if published.
+   * Publish a funded mission live.
+   * Returns false (no-op) if fundingStatus !== "funded".
    */
   publishLive(id: string): boolean {
     const mission = _missions.find((m) => m.id === id);
-    if (!mission) return false;
-    if (mission.fundingStatus !== "funded") return false;
+    if (!mission || mission.fundingStatus !== "funded") return false;
     _missions = _missions.map((m) =>
       m.id === id ? { ...m, status: "live" } : m,
     );
