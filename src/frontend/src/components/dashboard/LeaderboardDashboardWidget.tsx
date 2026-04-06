@@ -1,3 +1,4 @@
+import type { BearCredits } from "@/backend";
 import ShareActionsInline from "@/components/ShareActionsInline";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { Button } from "@/components/ui/button";
@@ -54,15 +55,30 @@ export default function LeaderboardDashboardWidget() {
           return;
         }
       }
+
       try {
         console.log(
-          "[LEADERBOARD-LOAD] LeaderboardDashboardWidget: fetching BP and leaderboard",
+          "[LEADERBOARD-LOAD] LeaderboardDashboardWidget: fetching leaderboard",
         );
         const principal = identity?.getPrincipal().toString() ?? "";
-        const [creditsOpt, leaderboardRaw] = await Promise.all([
-          actorToUse.getBearCredits(),
-          actorToUse.getGlobalLeaderboard(),
-        ]);
+
+        // Always fetch the public leaderboard independently — never gated on BP fetch.
+        const leaderboardRaw = await actorToUse.getGlobalLeaderboard();
+
+        // Only fetch Bear Credits when we have a real authenticated actor.
+        // Anonymous callers cannot call getBearCredits — it requires #user permission.
+        let creditsOpt: BearCredits | null = null;
+        if (actor) {
+          try {
+            creditsOpt = await actor.getBearCredits();
+          } catch (e) {
+            console.warn(
+              "[LEADERBOARD-LOAD] getBearCredits failed (non-fatal):",
+              e,
+            );
+          }
+        }
+
         if (!cancelled) {
           // BP
           const bearCredits = Array.isArray(creditsOpt)
@@ -107,7 +123,11 @@ export default function LeaderboardDashboardWidget() {
             }
           }
         }
-      } catch {
+      } catch (e) {
+        console.error(
+          "[LEADERBOARD-LOAD] LeaderboardDashboardWidget: fetch failed:",
+          e,
+        );
         if (!cancelled) setBp(0);
       } finally {
         if (!cancelled) setLoading(false);
