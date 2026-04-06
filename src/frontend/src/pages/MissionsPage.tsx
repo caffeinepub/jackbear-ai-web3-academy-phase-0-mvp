@@ -32,7 +32,13 @@ const _ADMIN_PRINCIPALS = [
   "mqrud-rxoxo-nbepq-sktaj-q76k5-r67zx-4wcgo-rhqmv-5mwys-3dl7s-zae",
 ];
 
-type MissionStatus = "draft" | "pending_approval" | "open" | "closed";
+type MissionStatus =
+  | "pending_review"
+  | "pending_funding"
+  | "approved"
+  | "live"
+  | "rejected"
+  | "closed";
 type MissionPhase = "entry" | "shortlist" | "finalist" | "winner_selected";
 type MissionDifficulty = "Beginner" | "Intermediate" | "Advanced";
 type PayoutStatus = "pending" | "awarded" | "paid";
@@ -72,7 +78,7 @@ const SEED_MISSIONS: Mission[] = [
     difficulty: "Intermediate",
     submissionCount: 4,
     deadline: "2025-06-15",
-    status: "open",
+    status: "live",
     submissionInstructions:
       "Submit a Caffeine.ai project link with a working demo. Include a short video walkthrough (max 2 minutes). Judges will test on mobile and desktop.",
     phase: "entry",
@@ -94,7 +100,7 @@ const SEED_MISSIONS: Mission[] = [
     difficulty: "Beginner",
     submissionCount: 7,
     deadline: "2025-05-30",
-    status: "open",
+    status: "live",
     submissionInstructions:
       "Deploy via Caffeine.ai and submit the live URL. Include a screenshot of the results card. Must be playable without login.",
     phase: "shortlist",
@@ -116,7 +122,7 @@ const SEED_MISSIONS: Mission[] = [
     difficulty: "Advanced",
     submissionCount: 3,
     deadline: "2025-07-01",
-    status: "open",
+    status: "live",
     submissionInstructions:
       "Submit Caffeine.ai project URL with README explaining data model choices. Judges will review code architecture and UI quality equally.",
     phase: "finalist",
@@ -138,7 +144,7 @@ const SEED_MISSIONS: Mission[] = [
     difficulty: "Advanced",
     submissionCount: 9,
     deadline: "2025-05-10",
-    status: "open",
+    status: "live",
     submissionInstructions:
       "Submit working Caffeine.ai prototype. Must include at least 5 token pairs. Judge focus: UX clarity and error state handling.",
     phase: "finalist",
@@ -160,7 +166,7 @@ const SEED_MISSIONS: Mission[] = [
     difficulty: "Intermediate",
     submissionCount: 5,
     deadline: "2025-06-20",
-    status: "open",
+    status: "live",
     submissionInstructions:
       "Submit Caffeine.ai project link. Must demonstrate full flow from upload to preview page. Include example NFT with at least 3 traits.",
     phase: "entry",
@@ -212,15 +218,15 @@ function getTimeRemaining(dateStr: string): string {
 }
 
 function StatusBadge({ status }: { status: MissionStatus }) {
-  if (status === "open") {
+  if (status === "live") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        Open
+        Live
       </span>
     );
   }
-  if (status === "pending_approval") {
+  if (status === "pending_review") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
         <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
@@ -228,11 +234,27 @@ function StatusBadge({ status }: { status: MissionStatus }) {
       </span>
     );
   }
-  if (status === "draft") {
+  if (status === "pending_funding") {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
-        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
-        Draft
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+        Pending Funding
+      </span>
+    );
+  }
+  if (status === "approved") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+        Approved
+      </span>
+    );
+  }
+  if (status === "rejected") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+        Rejected
       </span>
     );
   }
@@ -478,7 +500,7 @@ export default function MissionsPage() {
   });
   const [postSuccess, setPostSuccess] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<"open" | "closed" | "All">(
+  const [filterStatus, setFilterStatus] = useState<"live" | "closed" | "All">(
     "All",
   );
   const [submittingFor, setSubmittingFor] = useState<Mission | null>(null);
@@ -487,7 +509,7 @@ export default function MissionsPage() {
 
   // Only public missions
   const publicMissions = missions.filter(
-    (m) => m.status === "open" || m.status === "closed",
+    (m) => m.status === "live" || m.status === "closed",
   );
 
   const filteredMissions =
@@ -505,9 +527,7 @@ export default function MissionsPage() {
   );
 
   // Pending approval missions (admin only)
-  const pendingMissions = missions.filter(
-    (m) => m.status === "pending_approval",
-  );
+  const pendingMissions = missions.filter((m) => m.status === "pending_review");
 
   function scrollToFeed() {
     feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -515,7 +535,7 @@ export default function MissionsPage() {
 
   function handleApproveMission(id: string) {
     setMissions((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: "open" as const } : m)),
+      prev.map((m) => (m.id === id ? { ...m, status: "live" as const } : m)),
     );
   }
 
@@ -533,7 +553,7 @@ export default function MissionsPage() {
       difficulty: "Intermediate",
       submissionCount: 0,
       deadline: postFormData.deadline,
-      status: "pending_approval",
+      status: "pending_review",
       submissionInstructions:
         "Submit your solution link and a short explanation of your approach.",
       phase: "entry",
@@ -771,7 +791,7 @@ export default function MissionsPage() {
             className="flex gap-1 p-1 bg-muted/50 rounded-lg border border-border/40"
             data-ocid="missions.filter.tab"
           >
-            {(["All", "open", "closed"] as const).map((status) => (
+            {(["All", "live", "closed"] as const).map((status) => (
               <button
                 key={status}
                 type="button"
@@ -782,7 +802,7 @@ export default function MissionsPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {status === "open"
+                {status === "live"
                   ? "Open"
                   : status === "closed"
                     ? "Closed"

@@ -26,6 +26,7 @@ import { useSovereignMode } from "./hooks/useSovereignMode";
 import { updatePageMetadata } from "./lib/seo";
 
 import AboutCaffeineAIPage from "./pages/AboutCaffeineAIPage";
+import AdminMissionsPage from "./pages/AdminMissionsPage";
 import AdminPage from "./pages/AdminPage";
 import AdminStatsPage from "./pages/AdminStatsPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
@@ -241,6 +242,11 @@ const adminStatsRoute = createRoute({
   path: "/admin/stats",
   component: AdminStatsPage,
 });
+const adminMissionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/missions",
+  component: AdminMissionsPage,
+});
 const bpLedgerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/bp-history",
@@ -321,6 +327,7 @@ const routeTree = rootRoute.addChildren([
   referralRoute,
   adminRoute,
   adminStatsRoute,
+  adminMissionsRoute,
   bpLedgerRoute,
   monthlyPrizeRoute,
   hangmanRoute,

@@ -163,6 +163,13 @@ export default function AdminStatsPage() {
           </span>
           <button
             type="button"
+            onClick={() => navigate({ to: "/admin/missions" })}
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            Mission Queue
+          </button>
+          <button
+            type="button"
             onClick={() => navigate({ to: "/admin" })}
             className="text-xs text-muted-foreground hover:text-foreground underline"
           >
