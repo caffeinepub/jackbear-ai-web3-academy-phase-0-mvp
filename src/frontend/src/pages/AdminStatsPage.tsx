@@ -163,13 +163,6 @@ export default function AdminStatsPage() {
             Admin Access
           </span>
           <Button
-            variant="default"
-            size="sm"
-            onClick={() => navigate({ to: "/admin/missions" })}
-          >
-            Missions Analytics
-          </Button>
-          <Button
             variant="outline"
             size="sm"
             onClick={() => navigate({ to: "/admin/missions" })}
@@ -177,11 +170,11 @@ export default function AdminStatsPage() {
             Mission Queue
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={() => navigate({ to: "/admin" })}
+            onClick={() => navigate({ to: "/dashboard" })}
           >
-            Back to Admin
+            Player Dash
           </Button>
         </div>
       </div>

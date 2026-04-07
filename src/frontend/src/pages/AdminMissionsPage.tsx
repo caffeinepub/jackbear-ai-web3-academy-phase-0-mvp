@@ -657,20 +657,20 @@ export default function AdminMissionsPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Admin Access
           </span>
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => navigate({ to: "/admin/stats" })}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
           >
-            Analytics
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate({ to: "/" })}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
+            User Analytics
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate({ to: "/dashboard" })}
           >
-            Back to Admin
-          </button>
+            Player Dash
+          </Button>
         </div>
       </div>
 
