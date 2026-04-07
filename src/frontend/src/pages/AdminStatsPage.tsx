@@ -163,6 +163,13 @@ export default function AdminStatsPage() {
             Admin Access
           </span>
           <Button
+            variant="default"
+            size="sm"
+            onClick={() => navigate({ to: "/admin/missions" })}
+          >
+            Missions Analytics
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={() => navigate({ to: "/admin/missions" })}
