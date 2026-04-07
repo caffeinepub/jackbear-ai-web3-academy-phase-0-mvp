@@ -1711,14 +1711,26 @@ actor {
     // Total registered users = principals with a UserProfile
     let totalRegisteredUsers = profiles.size();
 
-    // Daily active users from existing analyticsStats counter
-    let dailyActiveUsers = analyticsStats.dailyActiveUsers;
+    // Daily active users: analyticsStats.dailyActiveUsers is never incremented by any
+    // backend path. Use currentActiveLearners (incremented by trackProgressEvent) as
+    // the honest proxy for users active today. This matches getPublicMetrics.activeLearnersToday.
+    let dailyActiveUsers = analyticsStats.currentActiveLearners;
 
-    // Monthly active users = principals with any entry in monthlyBPPerUser for current month
+    // Monthly active users = principals with any BP entry in monthlyBPPerUser for current month.
+    // Key format must match _awardCredits civil calendar derivation: "M_YYYY" e.g. "4_2026".
     let now = Time.now();
-    let monthNum = Int.abs((now / (30 * 24 * 3_600_000_000_000)) % 12 + 1);
-    let yearNum = Int.abs(now / (365 * 24 * 3_600_000_000_000) + 1970);
-    let monthKey = monthNum.toText() # "_" # yearNum.toText();
+    let nowSeconds : Int = now / 1_000_000_000;
+    let totalDays : Int = nowSeconds / 86400;
+    let z : Int = totalDays + 719468;
+    let era : Int = (if (z >= 0) { z } else { z - 146096 }) / 146097;
+    let doe : Int = z - era * 146097;
+    let yoe : Int = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let yRaw : Int = yoe + era * 400;
+    let doy : Int = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp : Int = (5 * doy + 2) / 153;
+    let monthInt : Int = if (mp < 10) { mp + 3 } else { mp - 9 };
+    let yearInt : Int = if (monthInt <= 2) { yRaw + 1 } else { yRaw };
+    let monthKey = Int.abs(monthInt).toText() # "_" # Int.abs(yearInt).toText();
     var monthlyActiveUsers = 0;
     for (pair in monthlyBPPerUser.toArray().vals()) {
       if (pair.1.get(monthKey) != null) {

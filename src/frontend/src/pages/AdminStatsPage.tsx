@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -161,20 +162,20 @@ export default function AdminStatsPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Admin Access
           </span>
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => navigate({ to: "/admin/missions" })}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
           >
             Mission Queue
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate({ to: "/admin" })}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
           >
             Back to Admin
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -203,12 +204,12 @@ export default function AdminStatsPage() {
             <StatCard
               label="Daily Active"
               value={Number(analytics.dailyActiveUsers).toLocaleString()}
-              sub="Last 24 h (authenticated)"
+              sub="Lessons/quizzes completed today (authenticated)"
             />
             <StatCard
               label="Monthly Active"
               value={Number(analytics.monthlyActiveUsers).toLocaleString()}
-              sub="This calendar month"
+              sub="Users with BP earned this calendar month"
             />
             <StatCard
               label="Users with BP"
